@@ -61,6 +61,7 @@ STRINGS: dict[str, str] = {
     "phase.phone": "Talking to the iPhone",
     "phase.copy": "Making a WhatsApp-only copy",
     "phase.check": "Checking the result",
+    "phase.stickers": "Adding favourite stickers",
     "phase.download": "Downloading adb",
     "phase.folder": "Copying {name}",
 
@@ -175,6 +176,8 @@ STRINGS: dict[str, str] = {
     "build.chats_merged": "{n} chats merged with ones already on the iPhone",
     "build.media_found": "{n} media files included",
     "build.media_missing": "{n} media files were missing on the Android phone",
+    "build.stickers_added": "{n} favourite stickers added to the sticker tray",
+    "build.stickers_skipped": "{n} favourite stickers were already on the iPhone or could not be read",
     "build.skipped.revoked": "{n} deleted messages",
     "build.skipped.system": "{n} system notices such as joins and leaves",
     "build.skipped.generic": "{n} items of type {kind}",

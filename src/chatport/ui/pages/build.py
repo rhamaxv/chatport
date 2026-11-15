@@ -21,6 +21,7 @@ def coverage_lines(result: dict) -> tuple[list[str], list[str]]:
         _line("build.chats_created", result.get("chats_created", 0)),
         _line("build.chats_merged", result.get("chats_merged", 0)),
         _line("build.media_found", result.get("media_found", 0)),
+        _line("build.stickers_added", result.get("stickers_added", 0)),
     ]
     missed: list[str] = []
     coverage = result.get("coverage") or {}
@@ -38,6 +39,9 @@ def coverage_lines(result: dict) -> tuple[list[str], list[str]]:
         missed.append(text if text != key else _line("build.table.generic", count, name=table.replace("_", " ")))
     if result.get("media_missing"):
         missed.append(_line("build.media_missing", result["media_missing"]))
+    left_out = result.get("stickers_found", 0) - result.get("stickers_added", 0)
+    if left_out > 0:
+        missed.append(_line("build.stickers_skipped", left_out))
     return came, missed
 
 
@@ -147,7 +151,8 @@ class BuildPage(Page):
     def stats(self) -> dict:
         if not self.result:
             return {}
-        keep = ("chats_created", "chats_merged", "messages_added", "media_found", "media_missing", "coverage")
+        keep = ("chats_created", "chats_merged", "messages_added", "media_found", "media_missing",
+                "stickers_found", "stickers_added", "coverage")
         return {k: self.result[k] for k in keep if k in self.result}
 
     def error_fallback_action(self) -> str | None:

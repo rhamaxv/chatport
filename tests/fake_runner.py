@@ -16,7 +16,7 @@ RESULTS: dict[str, dict] = {
              "media_bytes": 3_900_000_000, "first_ms": NOW_MS - 4 * 365 * 86400 * 1000, "last_ms": NOW_MS - 3600 * 1000},
     "backup": {"entries": 1200, "encrypted": False, "used_bytes": 21_000_000_000},
     "build": {"chats_created": 119, "chats_merged": 23, "messages_added": 61204, "media_found": 8290,
-              "media_missing": 21,
+              "media_missing": 21, "stickers_found": 112, "stickers_added": 110,
               "coverage": {"skipped": {"revoked": 310, "system": 1250},
                            "unconverted_tables": {"message_add_on_reaction": 4000, "call_log": 120}}},
     "restore": {"used_bytes_before": 21_000_000_000},

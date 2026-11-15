@@ -61,6 +61,7 @@ STRINGS: dict[str, str] = {
     "phase.phone": "Berkomunikasi dengan iPhone",
     "phase.copy": "Membuat salinan khusus WhatsApp",
     "phase.check": "Memeriksa hasil",
+    "phase.stickers": "Menambahkan stiker favorit",
     "phase.download": "Mengunduh adb",
     "phase.folder": "Menyalin {name}",
 
@@ -175,6 +176,8 @@ STRINGS: dict[str, str] = {
     "build.chats_merged": "{n} chat digabung ke chat lama di iPhone",
     "build.media_found": "{n} file media dimasukkan",
     "build.media_missing": "{n} file media tidak ada di HP Android",
+    "build.stickers_added": "{n} stiker favorit ditambahkan ke tray stiker",
+    "build.stickers_skipped": "{n} stiker favorit sudah ada di iPhone atau tidak bisa dibaca",
     "build.skipped.revoked": "{n} pesan yang sudah dihapus",
     "build.skipped.system": "{n} pesan sistem (masuk/keluar grup)",
     "build.skipped.generic": "{n} item bertipe {kind}",
