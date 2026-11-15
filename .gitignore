@@ -7,3 +7,4 @@ dist/
 .pytest_cache/
 packaging/out/
 *.log
+.DS_Store
