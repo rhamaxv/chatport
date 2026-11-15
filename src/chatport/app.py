@@ -33,15 +33,21 @@ def setup_logging() -> Path:
     return log_path
 
 
+FONT_FILES = ("Inter-Regular.ttf", "Inter-Medium.ttf", "Inter-SemiBold.ttf",
+              "BricolageGrotesque-SemiBold.ttf", "BricolageGrotesque-Bold.ttf")
+
+
 def load_fonts() -> bool:
+    """Inter for body text, Bricolage Grotesque for headings. A font that fails to load is skipped silently
+    and the stylesheet's fallback family takes over."""
     fonts = ASSETS / "fonts"
     loaded = 0
-    for name in ("Inter-Regular.ttf", "Inter-Medium.ttf", "Inter-SemiBold.ttf"):
+    for name in FONT_FILES:
         path = fonts / name
-        if path.is_file() and QFontDatabase.addApplicationFont(str(path)) >= 0:
+        if path.is_file() and QFontDatabase.addApplicationFont(str(path.resolve())) >= 0:
             loaded += 1
-    if loaded == 0:
-        log.info("Inter font not loaded, using the system font")
+        else:
+            log.info("font %s not loaded, using a fallback", name)
     return loaded > 0
 
 

@@ -1,42 +1,39 @@
 """Step 8: confirm, then restore the rebuilt WhatsApp data to the iPhone. Cannot be cancelled."""
 from __future__ import annotations
 
-from PySide6.QtWidgets import QHBoxLayout, QLabel, QVBoxLayout
+from PySide6.QtWidgets import QLabel, QVBoxLayout, QWidget
 
 from chatport.i18n import t
 from chatport.ui.pages.base import Context, Page
 from chatport.ui.widgets.banner import Banner
-from chatport.ui.widgets.cards import Card, Chip
-from chatport.ui.widgets.progress_card import ProgressCard
+from chatport.ui.widgets.progress import ProgressBlock
 
 EFFECTS = ("restore.effect.restart", "restore.effect.layout", "restore.effect.apps", "restore.effect.undo")
 
 
-class ConfirmCard(Card):
-    def __init__(self):
-        super().__init__(padding=24, spacing=12)
-        head = QHBoxLayout()
-        head.setSpacing(14)
-        self.icon = Chip("info", 36, "blue")
+class Confirmation(QWidget):
+    """What happens next, as text: a heading, one paragraph, the effects as plain lines."""
+
+    def __init__(self, parent: QWidget | None = None):
+        super().__init__(parent)
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(10)
         self.heading = QLabel()
         self.heading.setProperty("role", "heading")
-        head.addWidget(self.icon)
-        head.addWidget(self.heading, 1)
-        self.body.addLayout(head)
         self.intro = QLabel()
         self.intro.setWordWrap(True)
-        self.body.addWidget(self.intro)
         self.points = QLabel()
         self.points.setWordWrap(True)
         self.points.setProperty("role", "muted")
-        self.body.addWidget(self.points)
-        self.body.setContentsMargins(24, 22, 24, 22)
+        layout.addWidget(self.heading)
+        layout.addWidget(self.intro)
+        layout.addWidget(self.points)
 
     def retranslate(self) -> None:
         self.heading.setText(t("restore.confirm.title"))
         self.intro.setText(t("restore.confirm.body"))
-        self.points.setText("\n".join("\u2022  " + t(key) for key in EFFECTS))
-        self.icon.refresh()
+        self.points.setText("\n".join(t(key) for key in EFFECTS))
 
 
 class RestorePage(Page):
@@ -48,10 +45,10 @@ class RestorePage(Page):
     def __init__(self, ctx: Context):
         super().__init__(ctx)
         self._running = False
-        self.confirm = ConfirmCard()
-        self.banner = Banner("lock", "backup.banner")
+        self.confirm = Confirmation()
+        self.banner = Banner("backup.banner")
         self.banner.setVisible(False)
-        self.progress = ProgressCard(cancellable=False)
+        self.progress = ProgressBlock(cancellable=False)
         self.progress.setVisible(False)
         self.running_note = QLabel()
         self.running_note.setProperty("role", "muted")

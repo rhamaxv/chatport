@@ -1,56 +1,66 @@
-"""Step 1: what will happen, what stays safe, what is needed."""
+"""Step 1: the bridge diagram, three plain sentences, one button."""
 from __future__ import annotations
 
-from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QHBoxLayout, QLabel, QSizePolicy
+from PySide6.QtCore import QRectF, Qt
+from PySide6.QtGui import QColor, QPainter
+from PySide6.QtWidgets import QHBoxLayout, QLabel, QWidget
 
 from chatport.i18n import t
+from chatport.ui import icons, theme
 from chatport.ui.pages.base import Context, Page
-from chatport.ui.widgets.cards import Card, Chip
+from chatport.ui.widgets.bridge import Bridge
+
+GLYPH = 72
+PARAGRAPHS = (("welcome.what.title", "welcome.what.body"), ("welcome.safe.title", "welcome.safe.body"),
+              ("welcome.need.title", "welcome.need.body"))
 
 
-class InfoCard(Card):
-    def __init__(self, icon_name: str, hue: str, title_key: str, body_key: str):
-        super().__init__(padding=22, spacing=10)
-        self.title_key, self.body_key = title_key, body_key
-        self.icon = Chip(icon_name, 40, hue)
-        self.heading = QLabel()
-        self.heading.setProperty("role", "heading")
-        self.heading.setWordWrap(True)
-        self.text = QLabel()
-        self.text.setWordWrap(True)
-        self.text.setProperty("role", "muted")
-        self.text.setAlignment(Qt.AlignmentFlag.AlignTop)
-        self.body.addWidget(self.icon)
-        self.body.addSpacing(6)
-        self.body.addWidget(self.heading)
-        self.body.addWidget(self.text, 1)
-        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
+class PhoneGlyph(QWidget):
+    """A phone outline on a lime (Android) or lavender (iPhone) square: the two ends of the bridge."""
 
-    def retranslate(self) -> None:
-        self.heading.setText(t(self.title_key))
-        self.text.setText(t(self.body_key))
-        self.icon.refresh()
+    def __init__(self, side: str, parent: QWidget | None = None):
+        super().__init__(parent)
+        self.side = side
+        self.setFixedSize(GLYPH, GLYPH)
+
+    def paintEvent(self, _event) -> None:
+        p = theme.current()
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        painter.setPen(Qt.PenStyle.NoPen)
+        painter.setBrush(QColor(p.lavender if self.side == "iphone" else p.lime))
+        painter.drawRoundedRect(QRectF(0, 0, GLYPH, GLYPH), theme.PANEL_RADIUS, theme.PANEL_RADIUS)
+        name = "phone-iphone" if self.side == "iphone" else "phone-android"
+        painter.drawPixmap((GLYPH - 36) // 2, (GLYPH - 36) // 2, icons.pixmap(name, 36, p.on_accent, self.devicePixelRatioF()))
+        painter.end()
 
 
 class WelcomePage(Page):
     step = "welcome"
     title_key = "welcome.title"
     subtitle_key = "welcome.subtitle"
-    hero = "app"
 
     def __init__(self, ctx: Context):
         super().__init__(ctx)
-        row = QHBoxLayout()
-        row.setSpacing(16)
-        for card in (
-            InfoCard("arrow-right", "teal", "welcome.what.title", "welcome.what.body"),
-            InfoCard("shield", "blue", "welcome.safe.title", "welcome.safe.body"),
-            InfoCard("phone-iphone", "violet", "welcome.need.title", "welcome.need.body"),
-        ):
-            row.addWidget(card, 1)
-            self.track(card)
-        self.body.addLayout(row)
+        diagram = QHBoxLayout()
+        diagram.setContentsMargins(0, 8, 0, 8)
+        diagram.setSpacing(0)
+        self.android_glyph = PhoneGlyph("android")
+        self.iphone_glyph = PhoneGlyph("iphone")
+        self.bridge = Bridge()
+        diagram.addWidget(self.android_glyph, 0, Qt.AlignmentFlag.AlignVCenter)
+        diagram.addWidget(self.bridge, 1, Qt.AlignmentFlag.AlignVCenter)
+        diagram.addWidget(self.iphone_glyph, 0, Qt.AlignmentFlag.AlignVCenter)
+        self.body.addLayout(diagram)
+        self.body.addSpacing(8)
+        self.paragraphs: list[QLabel] = []
+        for _lead, _text in PARAGRAPHS:
+            label = QLabel()
+            label.setWordWrap(True)
+            label.setProperty("role", "lead")
+            label.setTextFormat(Qt.TextFormat.RichText)
+            self.body.addWidget(label)
+            self.paragraphs.append(label)
         self.privacy = QLabel()
         self.privacy.setProperty("role", "muted")
         self.privacy.setWordWrap(True)
@@ -59,10 +69,12 @@ class WelcomePage(Page):
 
     def retranslate(self) -> None:
         super().retranslate()
+        for label, (lead, text) in zip(self.paragraphs, PARAGRAPHS):
+            label.setText(f"<b>{t(lead)}.</b> {t(text)}")
         self.privacy.setText(t("welcome.privacy"))
 
     def continue_label_key(self) -> str:
-        return "welcome.continue"
+        return "welcome.cta"
 
     def shows_back(self) -> bool:
         return False

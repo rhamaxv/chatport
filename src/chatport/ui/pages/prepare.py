@@ -4,7 +4,7 @@ from __future__ import annotations
 import sys
 
 from PySide6.QtCore import QTimer
-from PySide6.QtWidgets import QHBoxLayout, QLabel
+from PySide6.QtWidgets import QLabel
 
 from chatport.i18n import t
 from chatport.ui.pages.base import Context, Page
@@ -31,14 +31,12 @@ class PreparePage(Page):
         self.checklist.add("find_my", "prepare.find_my", manual=False)        # verified over USB
         self.checklist.add("encryption", f"prepare.encryption.{_os_name()}", manual=False)
         self.checklist.add("airplane", "prepare.airplane", note_key="prepare.airplane.note")
-        self.checklist.changed.connect(lambda: self.continue_changed.emit(self.can_continue()))
+        self.checklist.changed.connect(self._on_checklist_changed)
         self.body.addWidget(self.checklist)
         self.track(self.checklist)
-        row = QHBoxLayout()
         self.check_label = QLabel()
         self.check_label.setProperty("role", "caption")
-        row.addWidget(self.check_label, 1)
-        self.body.addLayout(row)
+        self.body.addWidget(self.check_label)
         self.timer = QTimer(self)  # keep asking, so turning Find My off shows up by itself
         self.timer.setInterval(3000)
         self.timer.timeout.connect(self.check_iphone)
@@ -57,11 +55,15 @@ class PreparePage(Page):
     def can_continue(self) -> bool:
         return self.checklist.all_checked()
 
+    def _on_checklist_changed(self) -> None:
+        self.continue_changed.emit(self.can_continue())
+        self.panels_changed.emit()
+
     def check_iphone(self) -> None:
         if self._thread is not None and self._thread.isRunning():
             return
         fn = self.ctx.ready_checks_fn
-        if fn is None or (self._thread is not None and self._thread.isRunning()):
+        if fn is None:
             return
         self.check_label.setText(t("prepare.checking"))
         self._thread = FunctionThread(fn, self)
@@ -75,6 +77,7 @@ class PreparePage(Page):
         if iphone.get("state") != "ready":
             self.check_label.setText(t("prepare.no_iphone"))
             return
+        self.ctx.last_ready = {"iphone": iphone}
         whatsapp = iphone.get("whatsapp")
         self.checklist.set_live("whatsapp", True if whatsapp else (None if whatsapp is None else False),
                                 None if whatsapp else ("prepare.live.unknown" if whatsapp is None else "prepare.live.whatsapp_missing"))
@@ -85,4 +88,4 @@ class PreparePage(Page):
         self.checklist.set_live("encryption", None if encrypted is None else not encrypted,
                                 "prepare.live.still_on" if encrypted else None)
         self.check_label.setText(t("prepare.checked", name=iphone.get("name") or "iPhone"))
-        self.continue_changed.emit(self.can_continue())
+        self._on_checklist_changed()

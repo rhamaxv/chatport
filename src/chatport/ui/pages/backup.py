@@ -2,29 +2,32 @@
 from __future__ import annotations
 
 from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QHBoxLayout, QLabel, QPushButton, QVBoxLayout
+from PySide6.QtWidgets import QFrame, QHBoxLayout, QLabel, QPushButton, QVBoxLayout, QWidget
 
 from chatport.i18n import t
 from chatport.ui import format as fmt
 from chatport.ui.pages.base import Context, Page
 from chatport.ui.widgets.banner import Banner
-from chatport.ui.widgets.cards import Card, Chip
-from chatport.ui.widgets.progress_card import ProgressCard
+from chatport.ui.widgets.checklist import LiveMark
+from chatport.ui.widgets.progress import ProgressBlock
 
 
-class DoneCard(Card):
-    def __init__(self, text_key: str):
-        super().__init__(padding=20, spacing=0)
+class DoneLine(QWidget):
+    """A lime check and one sentence: the job is finished."""
+
+    def __init__(self, text_key: str, parent: QWidget | None = None):
+        super().__init__(parent)
         self.text_key = text_key
         self.kw: dict = {}
-        row = QHBoxLayout()
-        row.setSpacing(16)
-        self.icon = Chip("check", 40, "teal")
+        row = QHBoxLayout(self)
+        row.setContentsMargins(0, 0, 0, 0)
+        row.setSpacing(12)
+        self.mark = LiveMark()
+        self.mark.set_ok(True)
         self.label = QLabel()
         self.label.setWordWrap(True)
-        row.addWidget(self.icon, 0, Qt.AlignmentFlag.AlignVCenter)
-        row.addWidget(self.label, 1, Qt.AlignmentFlag.AlignVCenter)
-        self.body.addLayout(row)
+        row.addWidget(self.mark, 0, Qt.AlignmentFlag.AlignTop)
+        row.addWidget(self.label, 1)
 
     def show(self, **kw) -> None:
         self.kw = kw
@@ -32,7 +35,7 @@ class DoneCard(Card):
 
     def retranslate(self) -> None:
         self.label.setText(t(self.text_key, **self.kw))
-        self.icon.refresh()
+        self.mark.update()
 
 
 class BackupPage(Page):
@@ -43,44 +46,39 @@ class BackupPage(Page):
 
     def __init__(self, ctx: Context):
         super().__init__(ctx)
-        self.banner = Banner("lock", "backup.banner")
+        self.banner = Banner("backup.banner")
         self.banner.setVisible(False)
-        self.progress = ProgressCard(cancellable=True)
+        self.progress = ProgressBlock(cancellable=True)
         self.progress.cancelled.connect(self.ctx.runner.cancel)
-        self.done_card = DoneCard("backup.done")
+        self.done_card = DoneLine("backup.done")
         self.done_card.setVisible(False)
         self.note = QLabel()
         self.note.setProperty("role", "muted")
         self.note.setWordWrap(True)
-        self.reuse_card = Card(padding=20, spacing=10)
-        self.reuse_icon = Chip("download", 40, "blue")
+
+        self.reuse_card = QFrame()
+        self.reuse_card.setProperty("surface", True)
+        reuse_col = QVBoxLayout(self.reuse_card)
+        reuse_col.setContentsMargins(24, 20, 24, 20)
+        reuse_col.setSpacing(8)
         self.reuse_title = QLabel()
         self.reuse_title.setProperty("role", "heading")
         self.reuse_body = QLabel()
         self.reuse_body.setWordWrap(True)
-        self.reuse_body.setProperty("role", "muted")
         buttons = QHBoxLayout()
+        buttons.setContentsMargins(0, 8, 0, 0)
         buttons.setSpacing(8)
         self.reuse_button = QPushButton()
         self.reuse_button.setProperty("variant", "primary")
         self.reuse_button.clicked.connect(lambda: self.start_job(reuse=True))
         self.again_button = QPushButton()
-        self.again_button.setProperty("variant", "quiet")
         self.again_button.clicked.connect(lambda: self.start_job(reuse=False))
         buttons.addWidget(self.reuse_button)
         buttons.addWidget(self.again_button)
         buttons.addStretch(1)
-        reuse_row = QHBoxLayout()
-        reuse_row.setSpacing(16)
-        reuse_row.addWidget(self.reuse_icon, 0, Qt.AlignmentFlag.AlignTop)
-        reuse_col = QVBoxLayout()
-        reuse_col.setSpacing(6)
         reuse_col.addWidget(self.reuse_title)
         reuse_col.addWidget(self.reuse_body)
-        reuse_col.addSpacing(6)
         reuse_col.addLayout(buttons)
-        reuse_row.addLayout(reuse_col, 1)
-        self.reuse_card.body.addLayout(reuse_row)
         self.reuse_card.setVisible(False)
         self._reuse_age: float | None = None
         for widget in (self.reuse_card, self.banner, self.progress, self.done_card, self.note):

@@ -1,4 +1,5 @@
-"""Step 2: live status of the Android phone, the iPhone and this computer, refreshed every 3 seconds."""
+"""Step 2: live checks every 3 seconds. The phone panels carry the phones' state; the middle column shows
+this computer and the adb install control."""
 from __future__ import annotations
 
 from PySide6.QtCore import QTimer
@@ -8,8 +9,7 @@ from chatport.i18n import t
 from chatport.ui import format as fmt
 from chatport.ui.pages.base import Context, Page
 from chatport.ui.widgets.banner import Banner
-from chatport.ui.widgets.cards import StatusCard
-from chatport.ui.widgets.progress_bar import SlimBar
+from chatport.ui.widgets.progress import ProgressLine
 from chatport.ui.workers import FunctionThread
 
 INTERVAL_MS = 3000
@@ -48,30 +48,30 @@ class ConnectPage(Page):
         self.timer.setInterval(INTERVAL_MS)
         self.timer.timeout.connect(self.refresh)
 
-        self.notice = Banner("alert", "connect.disconnected", hue="amber")
+        self.notice = Banner("connect.disconnected")
         self.notice.setVisible(False)
         self.body.addWidget(self.notice)
-        self.android = StatusCard("phone-android")
-        self.iphone = StatusCard("phone-iphone")
-        self.computer = StatusCard("laptop")
-        for card in (self.android, self.iphone, self.computer):
-            self.body.addWidget(card)
+        self.computer_heading = QLabel()
+        self.computer_heading.setProperty("role", "heading")
+        self.body.addWidget(self.computer_heading)
+        self.computer_lines = QLabel()
+        self.computer_lines.setWordWrap(True)
+        self.body.addWidget(self.computer_lines)
 
         row = QHBoxLayout()
-        row.setContentsMargins(0, 8, 0, 0)
+        row.setSpacing(12)
         self.install_button = QPushButton()
         self.install_button.setProperty("variant", "primary")
         self.install_button.clicked.connect(self.start_job)
-        self.install_bar = SlimBar()
+        self.install_bar = ProgressLine()
         self.install_bar.set_value(0)
         self.install_label = QLabel()
         self.install_label.setProperty("role", "muted")
-        row.setSpacing(12)
         row.addWidget(self.install_button, 0)
         row.addWidget(self.install_bar, 1)
         row.addWidget(self.install_label, 0)
         row.addStretch(1)
-        self.computer.extra.addLayout(row)
+        self.body.addLayout(row)
         self._show_install(False)
         self.retranslate()
 
@@ -110,6 +110,7 @@ class ConnectPage(Page):
         self.result = result
         self.ctx.last_connect = result
         self.render()
+        self.panels_changed.emit()
         self.continue_changed.emit(self.can_continue())
 
     def can_continue(self) -> bool:
@@ -158,71 +159,20 @@ class ConnectPage(Page):
     def retranslate(self) -> None:
         super().retranslate()
         self.notice.retranslate()
-        for card in (self.android, self.iphone, self.computer):
-            card.retranslate()
+        self.computer_heading.setText(t("connect.computer.title"))
         self.install_button.setText(t("connect.install_adb"))
         self.render()
 
     def render(self) -> None:
-        r = self.result
-        if not r:
-            for card, key in ((self.android, "connect.android.title"), (self.iphone, "connect.iphone.title"),
-                              (self.computer, "connect.computer.title")):
-                card.set_state(t(key), t("connect.checking"), "gray")
+        c = (self.result or {}).get("computer") or {}
+        if not self.result:
+            self.computer_lines.setText(t("connect.checking"))
             return
-        self._render_android(r.get("android") or {})
-        self._render_iphone(r.get("iphone") or {})
-        self._render_computer(r.get("computer") or {})
-
-    def _render_android(self, a: dict) -> None:
-        state = a.get("state", "missing")
-        if state == "ready":
-            backup = a.get("backup", "none")
-            if backup == "ok":
-                status = t("connect.android.ready", model=a.get("model") or "Android")
-                status += "\n" + t("connect.android.backup.ok", age=fmt.age(a.get("backup_age_s")))
-                tone = "green"
-            else:
-                status = t("connect.android.ready", model=a.get("model") or "Android")
-                status += "\n" + t(f"connect.android.backup.{backup}")
-                status += "\n\n" + t("key.howto.path")  # the steps, right where the problem is shown
-                tone = "amber" if backup == "none" else "red"
-        else:
-            status = t(f"connect.android.{state}")
-            tone = "amber" if state in ("missing", "unauthorized") else "red"
-        self.android.set_state(t("connect.android.title"), status, tone)
-
-    def _render_iphone(self, i: dict) -> None:
-        state = i.get("state", "missing")
-        if state == "ready":
-            status = t("connect.iphone.ready", name=i.get("name") or "iPhone", ios=i.get("ios") or "")
-            notes = []
-            if i.get("encrypted"):
-                notes.append(t("connect.iphone.encrypted"))
-            if i.get("find_my"):
-                notes.append(t("connect.iphone.find_my"))
-            if notes:
-                status += "\n" + "\n".join(notes)
-            tone = "green"
-        else:
-            status = t(f"connect.iphone.{state}")
-            tone = "amber"
-        self.iphone.set_state(t("connect.iphone.title"), status, tone)
-
-    def _render_computer(self, c: dict) -> None:
         platform = c.get("platform") or {}
-        problems = []
-        if not c.get("adb"):
-            problems.append(t("connect.computer.no_adb"))
+        lines = [t("connect.computer.free", free=fmt.bytes_text(c.get("free_bytes")))]
+        lines.append(t("connect.computer.adb_ok") if c.get("adb") else t("connect.computer.no_adb"))
         if platform.get("state", "ok") != "ok":
-            problems.append(t(f"connect.computer.platform.{platform.get('state')}"))
-        free = fmt.bytes_text(c.get("free_bytes"))
-        if problems:
-            status = "\n".join(problems) + "\n" + t("connect.computer.free", free=free)
-            tone = "red"
-        else:
-            status = t("connect.computer.ready", free=free)
-            tone = "green"
-        self.computer.set_state(t("connect.computer.title"), status, tone)
+            lines.append(t(f"connect.computer.platform.{platform.get('state')}"))
+        self.computer_lines.setText("\n".join(lines))
         if not self._installing:
             self._show_install(not c.get("adb"))

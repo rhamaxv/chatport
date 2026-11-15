@@ -1,13 +1,12 @@
 """Step 7: merge the Android chats into the WhatsApp copy and explain what came across and what did not."""
 from __future__ import annotations
 
-from PySide6.QtWidgets import QHBoxLayout, QLabel, QVBoxLayout
+from PySide6.QtWidgets import QLabel, QVBoxLayout, QWidget
 
 from chatport.i18n import t
 from chatport.ui import format as fmt
 from chatport.ui.pages.base import Context, Page
-from chatport.ui.widgets.cards import Card, Chip
-from chatport.ui.widgets.progress_card import ProgressCard
+from chatport.ui.widgets.progress import ProgressBlock
 
 
 def _line(key: str, n: int, **kw) -> str:
@@ -15,7 +14,7 @@ def _line(key: str, n: int, **kw) -> str:
 
 
 def coverage_lines(result: dict) -> tuple[list[str], list[str]]:
-    """Plain sentences for the two columns of the coverage card."""
+    """Plain sentences for the two lists of the coverage report."""
     came = [
         _line("build.messages_added", result.get("messages_added", 0)),
         _line("build.chats_created", result.get("chats_created", 0)),
@@ -46,41 +45,34 @@ def coverage_lines(result: dict) -> tuple[list[str], list[str]]:
 
 
 class Column(QVBoxLayout):
-    def __init__(self, icon_name: str, hue: str, title_key: str):
+    def __init__(self, title_key: str):
         super().__init__()
-        self.setSpacing(10)
+        self.setSpacing(8)
         self.title_key = title_key
-        head = QHBoxLayout()
-        head.setSpacing(12)
-        self.icon = Chip(icon_name, 32, hue)
         self.heading = QLabel()
         self.heading.setProperty("role", "heading")
-        head.addWidget(self.icon)
-        head.addWidget(self.heading, 1)
-        self.addLayout(head)
+        self.addWidget(self.heading)
         self.lines = QLabel()
         self.lines.setWordWrap(True)
-        self.lines.setProperty("role", "muted")
-        self.lines.setContentsMargins(44, 0, 0, 0)
         self.addWidget(self.lines)
-        self.addStretch(1)
 
     def set_lines(self, lines: list[str], empty_key: str) -> None:
         self.heading.setText(t(self.title_key))
         self.lines.setText("\n".join(lines) if lines else t(empty_key))
-        self.icon.refresh()
 
 
-class CoverageCard(Card):
-    def __init__(self):
-        super().__init__(padding=24, spacing=12)
-        row = QHBoxLayout()
-        row.setSpacing(32)
-        self.came = Column("check", "teal", "build.coverage.title")
-        self.missed = Column("info", "blue", "build.not.title")
-        row.addLayout(self.came, 1)
-        row.addLayout(self.missed, 1)
-        self.body.addLayout(row)
+class Coverage(QWidget):
+    """Two plain lists, one under the other: what came across, then what did not."""
+
+    def __init__(self, parent: QWidget | None = None):
+        super().__init__(parent)
+        column = QVBoxLayout(self)
+        column.setContentsMargins(0, 0, 0, 0)
+        column.setSpacing(24)
+        self.came = Column("build.coverage.title")
+        self.missed = Column("build.not.title")
+        column.addLayout(self.came)
+        column.addLayout(self.missed)
         self.result: dict = {}
 
     def show(self, result: dict) -> None:
@@ -101,9 +93,9 @@ class BuildPage(Page):
 
     def __init__(self, ctx: Context):
         super().__init__(ctx)
-        self.progress = ProgressCard(cancellable=True)
+        self.progress = ProgressBlock(cancellable=True)
         self.progress.cancelled.connect(self.ctx.runner.cancel)
-        self.coverage = CoverageCard()
+        self.coverage = Coverage()
         self.coverage.setVisible(False)
         self.body.addWidget(self.progress)
         self.body.addWidget(self.coverage)

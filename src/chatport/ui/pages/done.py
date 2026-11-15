@@ -1,14 +1,15 @@
-"""Step 9: verify in WhatsApp, undo if something is wrong, delete the private copies, finish."""
+"""Step 9: the numbers that moved, a verify list, Undo and Delete private copies, Finish."""
 from __future__ import annotations
 
-from PySide6.QtWidgets import QCheckBox, QDialog, QHBoxLayout, QLabel, QMessageBox, QPushButton, QVBoxLayout
+from PySide6.QtCore import Qt
+from PySide6.QtWidgets import (QCheckBox, QDialog, QGridLayout, QHBoxLayout, QLabel, QMessageBox, QPushButton,
+                               QVBoxLayout, QWidget)
 
 from chatport.i18n import t
 from chatport.ui import format as fmt
 from chatport.ui.pages.base import Context, Page
-from chatport.ui.widgets.cards import Card, Chip, Tile
-from chatport.ui.widgets.checklist import Checklist
-from chatport.ui.widgets.progress_card import ProgressCard
+from chatport.ui.widgets.progress import ProgressBlock
+from chatport.ui.widgets.stat_tile import StatTile
 
 VERIFY = ("done.verify.chats", "done.verify.groups", "done.verify.media", "done.verify.other")
 TILES = (("messages", "copy.summary.messages"), ("chats", "copy.summary.chats"),
@@ -37,13 +38,15 @@ def summary_numbers(build: dict | None, copy: dict | None) -> dict[str, int | No
     }
 
 
-class ActionCard(Card):
-    def __init__(self, icon_name: str, hue: str, title_key: str, body_key: str, button_key: str, variant: str):
-        super().__init__(padding=20, spacing=6)
+class ActionRow(QWidget):
+    """A heading, one sentence, and the button that does it, on a row above a 1 px line."""
+
+    def __init__(self, title_key: str, body_key: str, button_key: str, variant: str):
+        super().__init__()
         self.keys = (title_key, body_key, button_key)
-        row = QHBoxLayout()
-        row.setSpacing(16)
-        self.icon = Chip(icon_name, 40, hue)
+        row = QHBoxLayout(self)
+        row.setContentsMargins(0, 12, 0, 12)
+        row.setSpacing(24)
         col = QVBoxLayout()
         col.setSpacing(4)
         self.heading = QLabel()
@@ -55,16 +58,13 @@ class ActionCard(Card):
         col.addWidget(self.text)
         self.button = QPushButton()
         self.button.setProperty("variant", variant)
-        row.addWidget(self.icon, 0)
         row.addLayout(col, 1)
-        row.addWidget(self.button, 0)
-        self.body.addLayout(row)
+        row.addWidget(self.button, 0, Qt.AlignmentFlag.AlignVCenter)
 
     def retranslate(self) -> None:
         self.heading.setText(t(self.keys[0]))
         self.text.setText(t(self.keys[1]))
         self.button.setText(t(self.keys[2]))
-        self.icon.refresh()
 
 
 class CleanupDialog(QDialog):
@@ -87,7 +87,6 @@ class CleanupDialog(QDialog):
         buttons = QHBoxLayout()
         buttons.addStretch(1)
         cancel = QPushButton(t("common.cancel"))
-        cancel.setProperty("variant", "quiet")
         cancel.clicked.connect(self.reject)
         ok = QPushButton(t("done.cleanup.confirm.button"))
         ok.setProperty("variant", "danger")
@@ -102,34 +101,33 @@ class DonePage(Page):
     jobs = ("undo",)
     title_key = "done.title"
     subtitle_key = "done.subtitle"
-    hero = "check"
-    hero_card = True
 
     def __init__(self, ctx: Context):
         super().__init__(ctx)
-        self.tiles_row = QHBoxLayout()
-        self.tiles_row.setSpacing(12)
-        self.tiles: dict[str, Tile] = {}
-        for key, caption in TILES:
-            tile = Tile(caption)
+        self.tiles_grid = QGridLayout()
+        self.tiles_grid.setHorizontalSpacing(12)
+        self.tiles_grid.setVerticalSpacing(12)
+        self.tiles: dict[str, StatTile] = {}
+        for i, (key, caption) in enumerate(TILES):
+            tile = StatTile(caption, "lime" if i in (0, 3) else "lavender")
             self.tiles[key] = tile
-            self.tiles_row.addWidget(tile, 1)
-        self.head.extra.addLayout(self.tiles_row)
+            self.tiles_grid.addWidget(tile, i // 2, i % 2)
+        self.body.addLayout(self.tiles_grid)
+        self.body.addSpacing(8)
         self.verify_heading = QLabel()
         self.verify_heading.setProperty("role", "heading")
         self.body.addWidget(self.verify_heading)
-        self.checklist = Checklist()
-        for key in VERIFY:
-            self.checklist.add(key, key)
-        self.body.addWidget(self.checklist)
-        self.track(self.checklist)
-        self.progress = ProgressCard(cancellable=False)
+        self.verify_lines = QLabel()
+        self.verify_lines.setWordWrap(True)
+        self.body.addWidget(self.verify_lines)
+        self.progress = ProgressBlock(cancellable=False)
         self.progress.setVisible(False)
         self.body.addWidget(self.progress)
         self.track(self.progress)
-        self.undo_card = ActionCard("undo", "amber", "done.undo.title", "done.undo.body", "done.undo", "")
+        self.body.addSpacing(8)
+        self.undo_card = ActionRow("done.undo.title", "done.undo.body", "done.undo", "")
         self.undo_card.button.clicked.connect(self.undo)
-        self.cleanup_card = ActionCard("trash", "rose", "done.cleanup.title", "done.cleanup.body", "done.cleanup", "danger")
+        self.cleanup_card = ActionRow("done.cleanup.title", "done.cleanup.body", "done.cleanup", "danger")
         self.cleanup_card.button.clicked.connect(self.cleanup)
         self.body.addWidget(self.undo_card)
         self.body.addWidget(self.cleanup_card)
@@ -141,6 +139,7 @@ class DonePage(Page):
     def retranslate(self) -> None:
         super().retranslate()
         self.verify_heading.setText(t("done.verify.title"))
+        self.verify_lines.setText("\n".join(t(key) for key in VERIFY))
         for tile in self.tiles.values():
             tile.retranslate()
 

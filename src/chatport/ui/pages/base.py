@@ -1,4 +1,7 @@
-"""What every wizard page shares: title, subtitle, a body of cards, error display and job hooks."""
+"""What every wizard page shares: a body for the middle column, error display, notices and job hooks.
+
+The window draws the step title and subtitle; a page only owns what goes under them.
+"""
 from __future__ import annotations
 
 import logging
@@ -11,11 +14,9 @@ from PySide6.QtWidgets import QApplication, QLabel, QMessageBox, QVBoxLayout, QW
 
 from chatport.i18n import t
 from chatport.ui.widgets.error_card import ErrorCard
-from chatport.ui.widgets.hero import Hero
 
 log = logging.getLogger("chatport.ui")
 
-PAGE_PADDING = 32
 GAP = 16
 
 
@@ -31,6 +32,7 @@ class Context:
     log_path: Path | None = None
     password: str | None = None
     last_connect: dict = field(default_factory=dict)
+    last_ready: dict = field(default_factory=dict)
 
     def iphone_encrypted(self) -> bool:
         if self.last_connect:
@@ -44,46 +46,27 @@ class Page(QWidget):
     jobs: tuple[str, ...] = ()
     title_key: str = ""
     subtitle_key: str = ""
-    # A hero header instead of the plain title block: "app" for the app icon, or an icon name for a big chip.
-    hero: str | None = None
-    hero_card: bool = False
-    hero_hue: str = "teal"
 
     continue_changed = Signal(bool)
     busy_changed = Signal(bool)
     advance = Signal()
     request_go = Signal(str)
     notice_changed = Signal(str)
+    panels_changed = Signal()      # the phones' live state changed; the window redraws the panels
 
     def __init__(self, ctx: Context, parent: QWidget | None = None):
         super().__init__(parent)
         self.ctx = ctx
         self._translatable: list = []
         outer = QVBoxLayout(self)
-        outer.setContentsMargins(PAGE_PADDING, 24, PAGE_PADDING, 24)
+        outer.setContentsMargins(0, 0, 0, 0)
         outer.setSpacing(0)
-        self.head: Hero | None = None
-        if self.hero:
-            self.head = Hero(self.hero, card=self.hero_card, hue=self.hero_hue)
-            self.title = self.head.title
-            self.subtitle = self.head.subtitle
-            outer.addWidget(self.head)
-        else:
-            self.title = QLabel()
-            self.title.setProperty("role", "title")
-            self.title.setWordWrap(True)
-            self.subtitle = QLabel()
-            self.subtitle.setProperty("role", "subtitle")
-            self.subtitle.setWordWrap(True)
-            outer.addWidget(self.title)
-            outer.addSpacing(6)
-            outer.addWidget(self.subtitle)
-        outer.addSpacing(24)
         self.error = ErrorCard()
         self.error.setVisible(False)
         self.error.action.connect(self._on_error_action)
         self.error.copy_log.connect(self.copy_log)
         outer.addWidget(self.error)
+        outer.addSpacing(GAP)
         self.body = QVBoxLayout()
         self.body.setSpacing(GAP)
         outer.addLayout(self.body)
@@ -138,11 +121,7 @@ class Page(QWidget):
         self._translatable.append(widget)
 
     def retranslate(self) -> None:
-        self.title.setText(t(self.title_key))
-        self.subtitle.setText(t(self.subtitle_key))
         self.error.retranslate()
-        if self.head is not None:
-            self.head.refresh()
         for widget in self._translatable:
             widget.retranslate()
 
@@ -151,9 +130,12 @@ class Page(QWidget):
         self.error.setVisible(True)
         self.busy_changed.emit(False)
         self.continue_changed.emit(self.can_continue())
+        self.panels_changed.emit()
 
     def clear_error(self) -> None:
-        self.error.setVisible(False)
+        if self.error.isVisible():
+            self.error.setVisible(False)
+            self.panels_changed.emit()
 
     def say(self, text: str, seconds: float = 4.0) -> None:
         self.notice.setText(text)
