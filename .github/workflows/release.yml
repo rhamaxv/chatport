@@ -15,10 +15,10 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: macos-14
+          - os: macos-latest
             build: bash packaging/build.sh
             artifact: dist/Chatport-*.dmg
-          - os: windows-2022
+          - os: windows-latest
             build: pwsh packaging/build.ps1
             artifact: dist/Chatport-*-Setup.exe
           - os: ubuntu-22.04
