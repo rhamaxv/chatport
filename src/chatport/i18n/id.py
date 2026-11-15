@@ -129,7 +129,7 @@ STRINGS: dict[str, str] = {
 
     # prepare
     "prepare.title": "Siapkan iPhone",
-    "prepare.subtitle": "Empat hal ini harus terpenuhi di iPhone sebelum dicadangkan. Centang satu per satu.",
+    "prepare.subtitle": "Find My dan enkripsi cadangan dicek lewat kabel. Dua lainnya kamu centang sendiri.",
     "prepare.whatsapp": "WhatsApp sudah terpasang dan masuk dengan nomor yang sama",
     "prepare.find_my": "Find My iPhone sudah mati (Settings > nama kamu > Find My)",
     "prepare.encryption.macos": "Cadangan terenkripsi mati. Di Finder, klik iPhone di sidebar lalu hilangkan centang Enkripsi cadangan lokal",

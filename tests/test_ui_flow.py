@@ -73,7 +73,10 @@ def test_full_flow(qtbot, tmp_path, themed):
     assert not window.continue_button.isEnabled()
     prepare = window.pages["prepare"]
     prepare.check_iphone()
-    qtbot.waitUntil(lambda: prepare.checklist.rows["whatsapp"].live is True, timeout=TIMEOUT)
+    qtbot.waitUntil(lambda: prepare.checklist.rows["find_my"].live is True, timeout=TIMEOUT)
+    assert prepare.checklist.rows["encryption"].checked()          # verified over the cable
+    assert not prepare.checklist.rows["whatsapp"].checked()        # installed is detected, signed in is not
+    prepare.checklist.rows["whatsapp"].box.setChecked(True)
     prepare.checklist.rows["airplane"].box.setChecked(True)
     click_continue(qtbot, window)
     wait_page(qtbot, window, "backup")

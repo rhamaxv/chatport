@@ -3,7 +3,8 @@ from __future__ import annotations
 
 import sys
 
-from PySide6.QtWidgets import QHBoxLayout, QLabel, QPushButton
+from PySide6.QtCore import QTimer
+from PySide6.QtWidgets import QHBoxLayout, QLabel
 
 from chatport.i18n import t
 from chatport.ui.pages.base import Context, Page
@@ -27,31 +28,29 @@ class PreparePage(Page):
         self._thread: FunctionThread | None = None
         self.checklist = Checklist()
         self.checklist.add("whatsapp", "prepare.whatsapp")
-        self.checklist.add("find_my", "prepare.find_my")
-        self.checklist.add("encryption", f"prepare.encryption.{_os_name()}")
+        self.checklist.add("find_my", "prepare.find_my", manual=False)        # verified over USB
+        self.checklist.add("encryption", f"prepare.encryption.{_os_name()}", manual=False)
         self.checklist.add("airplane", "prepare.airplane")
         self.checklist.changed.connect(lambda: self.continue_changed.emit(self.can_continue()))
         self.body.addWidget(self.checklist)
         self.track(self.checklist)
         row = QHBoxLayout()
-        self.check_button = QPushButton()
-        self.check_button.clicked.connect(self.check_iphone)
         self.check_label = QLabel()
         self.check_label.setProperty("role", "muted")
-        row.addWidget(self.check_button)
         row.addWidget(self.check_label, 1)
         self.body.addLayout(row)
+        self.timer = QTimer(self)  # keep asking, so turning Find My off shows up by itself
+        self.timer.setInterval(3000)
+        self.timer.timeout.connect(self.check_iphone)
         self.retranslate()
 
-    def retranslate(self) -> None:
-        super().retranslate()
-        self.check_button.setText(t("prepare.check"))
-
     def on_enter(self) -> None:
-        self.check_iphone()  # ask the iPhone right away; the user only ticks what cannot be verified
-        self.check_label.setText("")
+        self.check_label.setText(t("prepare.checking"))
+        self.check_iphone()
+        self.timer.start()
 
     def on_leave(self) -> None:
+        self.timer.stop()
         if self._thread is not None and self._thread.isRunning():
             self._thread.wait(5000)
 
@@ -59,10 +58,11 @@ class PreparePage(Page):
         return self.checklist.all_checked()
 
     def check_iphone(self) -> None:
+        if self._thread is not None and self._thread.isRunning():
+            return
         fn = self.ctx.ready_checks_fn
         if fn is None or (self._thread is not None and self._thread.isRunning()):
             return
-        self.check_button.setEnabled(False)
         self.check_label.setText(t("prepare.checking"))
         self._thread = FunctionThread(fn, self)
         self._thread.result.connect(self._on_result)
@@ -70,7 +70,6 @@ class PreparePage(Page):
         self._thread.start()
 
     def _on_result(self, result: object) -> None:
-        self.check_button.setEnabled(True)
         iphone = (result or {}).get("iphone") if isinstance(result, dict) else {}
         iphone = iphone or {}
         if iphone.get("state") != "ready":

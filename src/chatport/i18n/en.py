@@ -129,7 +129,7 @@ STRINGS: dict[str, str] = {
 
     # prepare
     "prepare.title": "Prepare the iPhone",
-    "prepare.subtitle": "Four things need to be true on the iPhone before its backup. Tick each one.",
+    "prepare.subtitle": "Find My and backup encryption are checked over the cable. Tick the other two yourself.",
     "prepare.whatsapp": "WhatsApp is installed and signed in with the same phone number",
     "prepare.find_my": "Find My iPhone is off (Settings > your name > Find My)",
     "prepare.encryption.macos": "Encrypted backups are off. In Finder, click the iPhone in the sidebar and untick Encrypt local backup",
