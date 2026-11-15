@@ -176,6 +176,7 @@ class ConnectPage(Page):
             else:
                 status = t("connect.android.ready", model=a.get("model") or "Android")
                 status += "\n" + t(f"connect.android.backup.{backup}")
+                status += "\n\n" + t("key.howto.path")  # the steps, right where the problem is shown
                 tone = "amber" if backup == "none" else "red"
         else:
             status = t(f"connect.android.{state}")
