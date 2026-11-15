@@ -20,7 +20,7 @@ Chatport downloads Google's official Android platform-tools into its own folder 
 
 ## Where Chatport keeps its files
 
-`~/Library/Application Support/Chatport`. The `work` folder inside holds the decrypted chats, media and iPhone backups while a transfer is in progress. The last screen lets you delete them. Logs are in `~/Library/Logs/Chatport`.
+`~/Library/Application Support/Chatport`. The `work` folder inside holds the decrypted chats, media and iPhone backups while a transfer is in progress. The last screen lets you delete them. Logs are in the `logs` folder inside it.
 
 ## Troubleshooting
 
