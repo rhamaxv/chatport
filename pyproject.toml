@@ -1,0 +1,33 @@
+[project]
+name = "chatport"
+version = "0.1.0"
+description = "Move WhatsApp from Android to the iPhone you already use, without erasing it"
+readme = "README.md"
+license = "GPL-3.0-or-later"
+license-files = ["LICENSE"]
+requires-python = ">=3.12"
+dependencies = [
+    "wamove @ git+https://github.com/rhamaxv/wamove.git@c1176277b705ea5d8851a45b5339053b9e0da668",
+    "PySide6>=6.7",
+]
+
+[project.scripts]
+chatport = "chatport.app:main"
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "pytest-qt>=4.4", "pyinstaller>=6.10", "Pillow>=10"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.metadata]
+allow-direct-references = true
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/chatport"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+qt_api = "pyside6"
