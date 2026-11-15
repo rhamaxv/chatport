@@ -43,7 +43,7 @@ WhatsApp's own Android to iPhone transfer only works while the iPhone is being s
 | Photos and videos | Links from a reply to the quoted message |
 | Voice notes | Edit history of edited messages |
 | Documents | Call history |
-| Stickers and GIFs | Statuses |
+| Stickers and GIFs in chats, and your favourite stickers | Statuses |
 | Shared locations and contact cards | Channels |
 | Timestamps and sender names | Disappearing-message timers (they need to be set again) |
 | Starred messages | WhatsApp Business is not supported |

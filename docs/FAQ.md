@@ -71,3 +71,12 @@ If the service is installed but not running, press Win+R, type `services.msc`, f
 ## Something else
 
 Open an issue at <https://github.com/rhamaxv/chatport/issues> with your operating system, the Chatport version, the step where it stopped and the error title. Attach the log from the Copy log button. It never contains your key or phone numbers.
+
+
+## Where are my favourite stickers?
+
+Chatport copies WhatsApp's own backup of your favourites from the Android phone and adds them to
+the sticker tray on the iPhone, so they appear under Favourites after the restore. Sticker packs you
+installed from the store or from third-party apps are not copied: install them again on the iPhone.
+If the Build report says some favourites could not be read, their files were no longer on the Android
+phone.
