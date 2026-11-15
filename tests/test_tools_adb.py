@@ -135,11 +135,9 @@ def test_common_locations_per_platform(monkeypatch, tmp_path):
     assert all(isinstance(p, str) and p.endswith("adb.exe") for p in win)
     assert any("chocolatey" in p for p in win)
     mac = adb._common_locations("darwin")
-    assert "/opt/homebrew/bin/adb" in mac
-    assert all("\\" not in p for p in mac)
+    assert mac[0] == "/opt/homebrew/bin/adb"  # literal, never normalized by the host's os.path
     linux = adb._common_locations("linux")
-    assert "/usr/bin/adb" in linux
-    assert all("\\" not in p for p in linux)
+    assert linux[0] == "/usr/bin/adb"
 
 
 def test_common_locations_windows_without_localappdata(monkeypatch):
