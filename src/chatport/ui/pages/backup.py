@@ -1,13 +1,14 @@
 """Step 6: a full iPhone backup, then a WhatsApp-only copy the next step can build on."""
 from __future__ import annotations
 
-from PySide6.QtWidgets import QHBoxLayout, QLabel, QPushButton
+from PySide6.QtCore import Qt
+from PySide6.QtWidgets import QHBoxLayout, QLabel, QPushButton, QVBoxLayout
 
 from chatport.i18n import t
 from chatport.ui import format as fmt
 from chatport.ui.pages.base import Context, Page
 from chatport.ui.widgets.banner import Banner
-from chatport.ui.widgets.cards import Card, IconLabel
+from chatport.ui.widgets.cards import Card, Chip
 from chatport.ui.widgets.progress_card import ProgressCard
 
 
@@ -17,12 +18,12 @@ class DoneCard(Card):
         self.text_key = text_key
         self.kw: dict = {}
         row = QHBoxLayout()
-        row.setSpacing(14)
-        self.icon = IconLabel("check", 24, "accent")
+        row.setSpacing(16)
+        self.icon = Chip("check", 40, "teal")
         self.label = QLabel()
         self.label.setWordWrap(True)
-        row.addWidget(self.icon)
-        row.addWidget(self.label, 1)
+        row.addWidget(self.icon, 0, Qt.AlignmentFlag.AlignVCenter)
+        row.addWidget(self.label, 1, Qt.AlignmentFlag.AlignVCenter)
         self.body.addLayout(row)
 
     def show(self, **kw) -> None:
@@ -52,12 +53,14 @@ class BackupPage(Page):
         self.note.setProperty("role", "muted")
         self.note.setWordWrap(True)
         self.reuse_card = Card(padding=20, spacing=10)
+        self.reuse_icon = Chip("download", 40, "blue")
         self.reuse_title = QLabel()
         self.reuse_title.setProperty("role", "heading")
         self.reuse_body = QLabel()
         self.reuse_body.setWordWrap(True)
         self.reuse_body.setProperty("role", "muted")
         buttons = QHBoxLayout()
+        buttons.setSpacing(8)
         self.reuse_button = QPushButton()
         self.reuse_button.setProperty("variant", "primary")
         self.reuse_button.clicked.connect(lambda: self.start_job(reuse=True))
@@ -67,9 +70,17 @@ class BackupPage(Page):
         buttons.addWidget(self.reuse_button)
         buttons.addWidget(self.again_button)
         buttons.addStretch(1)
-        self.reuse_card.body.addWidget(self.reuse_title)
-        self.reuse_card.body.addWidget(self.reuse_body)
-        self.reuse_card.body.addLayout(buttons)
+        reuse_row = QHBoxLayout()
+        reuse_row.setSpacing(16)
+        reuse_row.addWidget(self.reuse_icon, 0, Qt.AlignmentFlag.AlignTop)
+        reuse_col = QVBoxLayout()
+        reuse_col.setSpacing(6)
+        reuse_col.addWidget(self.reuse_title)
+        reuse_col.addWidget(self.reuse_body)
+        reuse_col.addSpacing(6)
+        reuse_col.addLayout(buttons)
+        reuse_row.addLayout(reuse_col, 1)
+        self.reuse_card.body.addLayout(reuse_row)
         self.reuse_card.setVisible(False)
         self._reuse_age: float | None = None
         for widget in (self.reuse_card, self.banner, self.progress, self.done_card, self.note):

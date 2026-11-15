@@ -1,46 +1,34 @@
 """Step 4: copy the database, contact names and media from the Android phone, then decrypt and summarize."""
 from __future__ import annotations
 
-from PySide6.QtWidgets import QHBoxLayout, QLabel, QVBoxLayout
+from PySide6.QtWidgets import QHBoxLayout, QLabel
 
 from chatport.i18n import t
 from chatport.ui import format as fmt
 from chatport.ui.pages.base import Context, Page
-from chatport.ui.widgets.cards import Card
+from chatport.ui.widgets.cards import Card, Chip, Tile
 from chatport.ui.widgets.progress_card import ProgressCard
 
 STATS = (("chats", "copy.summary.chats"), ("groups", "copy.summary.groups"),
          ("messages", "copy.summary.messages"), ("media", "copy.summary.media"))
 
 
-class Stat(QVBoxLayout):
-    def __init__(self, label_key: str):
-        super().__init__()
-        self.setSpacing(2)
-        self.label_key = label_key
-        self.value = QLabel("0")
-        self.value.setProperty("role", "stat")
-        self.caption = QLabel()
-        self.caption.setProperty("role", "muted")
-        self.addWidget(self.value)
-        self.addWidget(self.caption)
-
-    def retranslate(self) -> None:
-        self.caption.setText(t(self.label_key))
-
-
 class SummaryCard(Card):
     def __init__(self):
-        super().__init__(padding=24, spacing=14)
+        super().__init__(padding=22, spacing=14)
+        head = QHBoxLayout()
+        head.setSpacing(14)
+        self.icon = Chip("check", 36, "teal")
         self.heading = QLabel()
         self.heading.setProperty("role", "heading")
-        self.body.addWidget(self.heading)
+        head.addWidget(self.icon)
+        head.addWidget(self.heading, 1)
+        self.body.addLayout(head)
         row = QHBoxLayout()
-        row.setSpacing(28)
-        self.stats = {key: Stat(label) for key, label in STATS}
+        row.setSpacing(12)
+        self.stats = {key: Tile(label) for key, label in STATS}
         for stat in self.stats.values():
-            row.addLayout(stat)
-        row.addStretch(1)
+            row.addWidget(stat, 1)
         self.body.addLayout(row)
         self.range = QLabel()
         self.range.setProperty("role", "muted")
@@ -54,10 +42,12 @@ class SummaryCard(Card):
     def retranslate(self) -> None:
         self.heading.setText(t("copy.summary.title"))
         for key, stat in self.stats.items():
-            stat.value.setText(fmt.number(self.data.get(key)))
+            stat.set_value(fmt.number(self.data.get(key)))
             stat.retranslate()
         first, last = fmt.date_ms(self.data.get("first_ms")), fmt.date_ms(self.data.get("last_ms"))
         self.range.setText(t("copy.summary.range", first=first, last=last) if first and last else "")
+        self.range.setVisible(bool(first and last))
+        self.icon.refresh()
 
 
 class CopyPage(Page):

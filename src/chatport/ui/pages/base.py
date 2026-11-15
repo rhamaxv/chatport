@@ -11,8 +11,12 @@ from PySide6.QtWidgets import QApplication, QLabel, QMessageBox, QVBoxLayout, QW
 
 from chatport.i18n import t
 from chatport.ui.widgets.error_card import ErrorCard
+from chatport.ui.widgets.hero import Hero
 
 log = logging.getLogger("chatport.ui")
+
+PAGE_PADDING = 32
+GAP = 16
 
 
 @dataclass
@@ -40,6 +44,10 @@ class Page(QWidget):
     jobs: tuple[str, ...] = ()
     title_key: str = ""
     subtitle_key: str = ""
+    # A hero header instead of the plain title block: "app" for the app icon, or an icon name for a big chip.
+    hero: str | None = None
+    hero_card: bool = False
+    hero_hue: str = "teal"
 
     continue_changed = Signal(bool)
     busy_changed = Signal(bool)
@@ -52,26 +60,32 @@ class Page(QWidget):
         self.ctx = ctx
         self._translatable: list = []
         outer = QVBoxLayout(self)
-        outer.setContentsMargins(48, 32, 48, 28)
+        outer.setContentsMargins(PAGE_PADDING, 24, PAGE_PADDING, 24)
         outer.setSpacing(0)
-        self.title = QLabel()
-        self.title.setProperty("role", "title")
-        self.title.setWordWrap(True)
-        self.subtitle = QLabel()
-        self.subtitle.setProperty("role", "subtitle")
-        self.subtitle.setWordWrap(True)
-        outer.addWidget(self.title)
-        outer.addSpacing(6)
-        outer.addWidget(self.subtitle)
+        self.head: Hero | None = None
+        if self.hero:
+            self.head = Hero(self.hero, card=self.hero_card, hue=self.hero_hue)
+            self.title = self.head.title
+            self.subtitle = self.head.subtitle
+            outer.addWidget(self.head)
+        else:
+            self.title = QLabel()
+            self.title.setProperty("role", "title")
+            self.title.setWordWrap(True)
+            self.subtitle = QLabel()
+            self.subtitle.setProperty("role", "subtitle")
+            self.subtitle.setWordWrap(True)
+            outer.addWidget(self.title)
+            outer.addSpacing(6)
+            outer.addWidget(self.subtitle)
         outer.addSpacing(24)
         self.error = ErrorCard()
         self.error.setVisible(False)
         self.error.action.connect(self._on_error_action)
         self.error.copy_log.connect(self.copy_log)
         outer.addWidget(self.error)
-        outer.addSpacing(0)
         self.body = QVBoxLayout()
-        self.body.setSpacing(16)
+        self.body.setSpacing(GAP)
         outer.addLayout(self.body)
         self.notice = QLabel()
         self.notice.setProperty("role", "muted")
@@ -127,6 +141,8 @@ class Page(QWidget):
         self.title.setText(t(self.title_key))
         self.subtitle.setText(t(self.subtitle_key))
         self.error.retranslate()
+        if self.head is not None:
+            self.head.refresh()
         for widget in self._translatable:
             widget.retranslate()
 

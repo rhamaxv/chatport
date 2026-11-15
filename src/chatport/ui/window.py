@@ -72,13 +72,14 @@ class MainWindow(QMainWindow):
         header = QWidget()
         header.setObjectName("header")
         hl = QHBoxLayout(header)
-        hl.setContentsMargins(48, 14, 24, 0)
+        hl.setContentsMargins(32, 18, 32, 0)
         self.step_label = QLabel()
-        self.step_label.setProperty("role", "muted")
-        hl.addWidget(self.step_label)
+        self.step_label.setProperty("role", "eyebrow")
+        hl.addWidget(self.step_label, 0, Qt.AlignmentFlag.AlignVCenter)
         hl.addStretch(1)
+        # Language switch and theme toggle share one pill group.
         self.lang_frame = QFrame()
-        self.lang_frame.setProperty("card", True)
+        self.lang_frame.setObjectName("controls")
         ll = QHBoxLayout(self.lang_frame)
         ll.setContentsMargins(3, 3, 3, 3)
         ll.setSpacing(2)
@@ -91,13 +92,18 @@ class MainWindow(QMainWindow):
             button.clicked.connect(lambda _c=False, code=code: self.set_language(code))
             ll.addWidget(button)
             self.lang_buttons[code] = button
-        hl.addWidget(self.lang_frame)
-        hl.addSpacing(8)
+        divider = QFrame()
+        divider.setObjectName("divider")
+        divider.setFixedWidth(1)
+        ll.addSpacing(3)
+        ll.addWidget(divider)
+        ll.addSpacing(3)
         self.theme_button = QPushButton()
         self.theme_button.setProperty("variant", "icon")
         self.theme_button.setCursor(Qt.CursorShape.PointingHandCursor)
         self.theme_button.clicked.connect(self.toggle_theme)
-        hl.addWidget(self.theme_button)
+        ll.addWidget(self.theme_button)
+        hl.addWidget(self.lang_frame, 0, Qt.AlignmentFlag.AlignVCenter)
         right.addWidget(header)
 
         self.stack = QStackedWidget()
@@ -106,7 +112,7 @@ class MainWindow(QMainWindow):
         footer = QWidget()
         footer.setObjectName("footer")
         fl = QHBoxLayout(footer)
-        fl.setContentsMargins(48, 16, 48, 20)
+        fl.setContentsMargins(32, 14, 32, 18)
         self.back_button = QPushButton()
         self.back_button.setProperty("variant", "quiet")
         self.back_button.clicked.connect(self.back)
@@ -196,7 +202,7 @@ class MainWindow(QMainWindow):
     def _refresh_rail(self) -> None:
         done = {step for step in STEPS if self.state.done(step)}
         self.rail.set_progress(self.current, done)
-        self.step_label.setText(t("header.step", n=STEPS.index(self.current) + 1, total=len(STEPS)))
+        self.step_label.setText(t("header.step", n=STEPS.index(self.current) + 1, total=len(STEPS)).upper())
 
     def _refresh_footer(self, *_args) -> None:
         page = self.page() if hasattr(self, "pages") and self.current in self.pages else None

@@ -2,13 +2,14 @@
 from __future__ import annotations
 
 from PySide6.QtCore import QTimer
-from PySide6.QtWidgets import QHBoxLayout, QLabel, QProgressBar, QPushButton
+from PySide6.QtWidgets import QHBoxLayout, QLabel, QPushButton
 
 from chatport.i18n import t
 from chatport.ui import format as fmt
 from chatport.ui.pages.base import Context, Page
 from chatport.ui.widgets.banner import Banner
 from chatport.ui.widgets.cards import StatusCard
+from chatport.ui.widgets.progress_bar import SlimBar
 from chatport.ui.workers import FunctionThread
 
 INTERVAL_MS = 3000
@@ -47,7 +48,7 @@ class ConnectPage(Page):
         self.timer.setInterval(INTERVAL_MS)
         self.timer.timeout.connect(self.refresh)
 
-        self.notice = Banner("alert", "connect.disconnected")
+        self.notice = Banner("alert", "connect.disconnected", hue="amber")
         self.notice.setVisible(False)
         self.body.addWidget(self.notice)
         self.android = StatusCard("phone-android")
@@ -61,11 +62,11 @@ class ConnectPage(Page):
         self.install_button = QPushButton()
         self.install_button.setProperty("variant", "primary")
         self.install_button.clicked.connect(self.start_job)
-        self.install_bar = QProgressBar()
-        self.install_bar.setRange(0, 100)
-        self.install_bar.setTextVisible(False)
+        self.install_bar = SlimBar()
+        self.install_bar.set_value(0)
         self.install_label = QLabel()
         self.install_label.setProperty("role", "muted")
+        row.setSpacing(12)
         row.addWidget(self.install_button, 0)
         row.addWidget(self.install_bar, 1)
         row.addWidget(self.install_label, 0)
@@ -129,18 +130,14 @@ class ConnectPage(Page):
     def start_job(self) -> None:
         self.clear_error()
         self._installing = True
-        self.install_bar.setValue(0)
+        self.install_bar.set_value(0)
         self._show_install(True, running=True)
         self.continue_changed.emit(False)
         self.ctx.runner.install_adb()
 
     def on_event(self, event) -> None:
         if event.kind == "progress":
-            if event.pct is None:
-                self.install_bar.setRange(0, 0)
-            else:
-                self.install_bar.setRange(0, 100)
-                self.install_bar.setValue(int(event.pct))
+            self.install_bar.set_value(event.pct)
             self.install_label.setText(t("connect.installing_adb", pct=int(event.pct or 0)))
         elif event.kind == "done":
             self._installing = False
@@ -161,6 +158,8 @@ class ConnectPage(Page):
     def retranslate(self) -> None:
         super().retranslate()
         self.notice.retranslate()
+        for card in (self.android, self.iphone, self.computer):
+            card.retranslate()
         self.install_button.setText(t("connect.install_adb"))
         self.render()
 

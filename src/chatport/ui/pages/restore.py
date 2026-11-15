@@ -6,7 +6,7 @@ from PySide6.QtWidgets import QHBoxLayout, QLabel, QVBoxLayout
 from chatport.i18n import t
 from chatport.ui.pages.base import Context, Page
 from chatport.ui.widgets.banner import Banner
-from chatport.ui.widgets.cards import Card, IconLabel
+from chatport.ui.widgets.cards import Card, Chip
 from chatport.ui.widgets.progress_card import ProgressCard
 
 EFFECTS = ("restore.effect.restart", "restore.effect.layout", "restore.effect.apps", "restore.effect.undo")
@@ -17,7 +17,7 @@ class ConfirmCard(Card):
         super().__init__(padding=24, spacing=12)
         head = QHBoxLayout()
         head.setSpacing(14)
-        self.icon = IconLabel("info", 24, "accent")
+        self.icon = Chip("info", 36, "blue")
         self.heading = QLabel()
         self.heading.setProperty("role", "heading")
         head.addWidget(self.icon)
@@ -30,11 +30,12 @@ class ConfirmCard(Card):
         self.points.setWordWrap(True)
         self.points.setProperty("role", "muted")
         self.body.addWidget(self.points)
+        self.body.setContentsMargins(24, 22, 24, 22)
 
     def retranslate(self) -> None:
         self.heading.setText(t("restore.confirm.title"))
         self.intro.setText(t("restore.confirm.body"))
-        self.points.setText("\n".join("•  " + t(key) for key in EFFECTS))
+        self.points.setText("\n".join("\u2022  " + t(key) for key in EFFECTS))
         self.icon.refresh()
 
 

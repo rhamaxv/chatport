@@ -4,21 +4,46 @@ from __future__ import annotations
 from PySide6.QtWidgets import QCheckBox, QDialog, QHBoxLayout, QLabel, QMessageBox, QPushButton, QVBoxLayout
 
 from chatport.i18n import t
+from chatport.ui import format as fmt
 from chatport.ui.pages.base import Context, Page
-from chatport.ui.widgets.cards import Card, IconLabel
+from chatport.ui.widgets.cards import Card, Chip, Tile
 from chatport.ui.widgets.checklist import Checklist
 from chatport.ui.widgets.progress_card import ProgressCard
 
 VERIFY = ("done.verify.chats", "done.verify.groups", "done.verify.media", "done.verify.other")
+TILES = (("messages", "copy.summary.messages"), ("chats", "copy.summary.chats"),
+         ("media", "copy.summary.media"), ("stickers", "done.stats.stickers"))
+
+
+def summary_numbers(build: dict | None, copy: dict | None) -> dict[str, int | None]:
+    """What ended up on the iPhone, from the build result, falling back to what was copied from Android."""
+    build = build or {}
+    copy = copy or {}
+
+    def pick(*candidates):
+        for value in candidates:
+            if value is not None:
+                return int(value)
+        return None
+
+    chats = None
+    if build.get("chats_created") is not None or build.get("chats_merged") is not None:
+        chats = int(build.get("chats_created") or 0) + int(build.get("chats_merged") or 0)
+    return {
+        "messages": pick(build.get("messages_added"), copy.get("messages")),
+        "chats": pick(chats, copy.get("chats")),
+        "media": pick(build.get("media_found"), copy.get("media")),
+        "stickers": pick(build.get("stickers_added")),
+    }
 
 
 class ActionCard(Card):
-    def __init__(self, icon_name: str, title_key: str, body_key: str, button_key: str, variant: str):
+    def __init__(self, icon_name: str, hue: str, title_key: str, body_key: str, button_key: str, variant: str):
         super().__init__(padding=20, spacing=6)
         self.keys = (title_key, body_key, button_key)
         row = QHBoxLayout()
-        row.setSpacing(14)
-        self.icon = IconLabel(icon_name, 24, "text_muted")
+        row.setSpacing(16)
+        self.icon = Chip(icon_name, 40, hue)
         col = QVBoxLayout()
         col.setSpacing(4)
         self.heading = QLabel()
@@ -77,9 +102,19 @@ class DonePage(Page):
     jobs = ("undo",)
     title_key = "done.title"
     subtitle_key = "done.subtitle"
+    hero = "check"
+    hero_card = True
 
     def __init__(self, ctx: Context):
         super().__init__(ctx)
+        self.tiles_row = QHBoxLayout()
+        self.tiles_row.setSpacing(12)
+        self.tiles: dict[str, Tile] = {}
+        for key, caption in TILES:
+            tile = Tile(caption)
+            self.tiles[key] = tile
+            self.tiles_row.addWidget(tile, 1)
+        self.head.extra.addLayout(self.tiles_row)
         self.verify_heading = QLabel()
         self.verify_heading.setProperty("role", "heading")
         self.body.addWidget(self.verify_heading)
@@ -92,9 +127,9 @@ class DonePage(Page):
         self.progress.setVisible(False)
         self.body.addWidget(self.progress)
         self.track(self.progress)
-        self.undo_card = ActionCard("undo", "done.undo.title", "done.undo.body", "done.undo", "")
+        self.undo_card = ActionCard("undo", "amber", "done.undo.title", "done.undo.body", "done.undo", "")
         self.undo_card.button.clicked.connect(self.undo)
-        self.cleanup_card = ActionCard("trash", "done.cleanup.title", "done.cleanup.body", "done.cleanup", "danger")
+        self.cleanup_card = ActionCard("trash", "rose", "done.cleanup.title", "done.cleanup.body", "done.cleanup", "danger")
         self.cleanup_card.button.clicked.connect(self.cleanup)
         self.body.addWidget(self.undo_card)
         self.body.addWidget(self.cleanup_card)
@@ -106,6 +141,19 @@ class DonePage(Page):
     def retranslate(self) -> None:
         super().retranslate()
         self.verify_heading.setText(t("done.verify.title"))
+        for tile in self.tiles.values():
+            tile.retranslate()
+
+    def on_enter(self) -> None:
+        self.refresh_tiles()
+
+    def refresh_tiles(self) -> None:
+        numbers = summary_numbers(self.ctx.state.get("build"), self.ctx.state.get("copy"))
+        for key, tile in self.tiles.items():
+            value = numbers.get(key)
+            tile.setVisible(value is not None)
+            if value is not None:
+                tile.set_value(fmt.number(value))
 
     def shows_back(self) -> bool:
         return False

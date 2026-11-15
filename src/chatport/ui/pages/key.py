@@ -1,12 +1,14 @@
 """Step 3: the 64-digit end-to-end backup key, checked against a small sample before any long copy."""
 from __future__ import annotations
 
-from PySide6.QtWidgets import QHBoxLayout, QLabel, QProgressBar, QPushButton, QApplication
+from PySide6.QtCore import Qt
+from PySide6.QtWidgets import QApplication, QHBoxLayout, QLabel, QPushButton, QVBoxLayout
 
 from chatport.i18n import t
 from chatport.ui.pages.base import Context, Page
-from chatport.ui.widgets.cards import Card, IconLabel
+from chatport.ui.widgets.cards import Card, Chip
 from chatport.ui.widgets.key_grid import KeyGrid
+from chatport.ui.widgets.progress_bar import SlimBar
 
 
 class KeyPage(Page):
@@ -32,9 +34,8 @@ class KeyPage(Page):
         self.grid = KeyGrid()
         self.grid.changed.connect(self._on_changed)
         card.body.addWidget(self.grid)
-        self.checking_bar = QProgressBar()
-        self.checking_bar.setRange(0, 0)
-        self.checking_bar.setTextVisible(False)
+        self.checking_bar = SlimBar()
+        self.checking_bar.set_value(None)
         self.checking_label = QLabel()
         self.checking_label.setProperty("role", "muted")
         card.body.addWidget(self.checking_bar)
@@ -44,23 +45,25 @@ class KeyPage(Page):
 
         howto = Card(padding=20, spacing=8)
         row = QHBoxLayout()
-        row.setSpacing(14)
-        self.howto_icon = IconLabel("key", 24, "accent")
-        row.addWidget(self.howto_icon)
-        text_col = QHBoxLayout()
+        row.setSpacing(16)
+        self.howto_icon = Chip("key", 40, "amber")
+        row.addWidget(self.howto_icon, 0, Qt.AlignmentFlag.AlignTop)
+        text_col = QVBoxLayout()
+        text_col.setSpacing(6)
         self.howto_title = QLabel()
         self.howto_title.setProperty("role", "heading")
-        row.addWidget(self.howto_title, 1)
-        howto.body.addLayout(row)
         self.howto_body = QLabel()
         self.howto_body.setWordWrap(True)
         self.howto_body.setProperty("role", "muted")
         self.howto_path = QLabel()
         self.howto_path.setWordWrap(True)
         self.howto_path.setProperty("role", "mono")
-        self.howto_path.setWordWrap(True)
-        howto.body.addWidget(self.howto_body)
-        howto.body.addWidget(self.howto_path)
+        text_col.addWidget(self.howto_title)
+        text_col.addWidget(self.howto_body)
+        text_col.addSpacing(4)
+        text_col.addWidget(self.howto_path)
+        row.addLayout(text_col, 1)
+        howto.body.addLayout(row)
         self.body.addWidget(howto)
         self.retranslate()
 

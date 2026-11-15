@@ -6,7 +6,7 @@ from PySide6.QtWidgets import QHBoxLayout, QLabel, QVBoxLayout
 from chatport.i18n import t
 from chatport.ui import format as fmt
 from chatport.ui.pages.base import Context, Page
-from chatport.ui.widgets.cards import Card, IconLabel
+from chatport.ui.widgets.cards import Card, Chip
 from chatport.ui.widgets.progress_card import ProgressCard
 
 
@@ -46,13 +46,13 @@ def coverage_lines(result: dict) -> tuple[list[str], list[str]]:
 
 
 class Column(QVBoxLayout):
-    def __init__(self, icon_name: str, color_key: str, title_key: str):
+    def __init__(self, icon_name: str, hue: str, title_key: str):
         super().__init__()
-        self.setSpacing(8)
+        self.setSpacing(10)
         self.title_key = title_key
         head = QHBoxLayout()
-        head.setSpacing(10)
-        self.icon = IconLabel(icon_name, 20, color_key)
+        head.setSpacing(12)
+        self.icon = Chip(icon_name, 32, hue)
         self.heading = QLabel()
         self.heading.setProperty("role", "heading")
         head.addWidget(self.icon)
@@ -61,6 +61,7 @@ class Column(QVBoxLayout):
         self.lines = QLabel()
         self.lines.setWordWrap(True)
         self.lines.setProperty("role", "muted")
+        self.lines.setContentsMargins(44, 0, 0, 0)
         self.addWidget(self.lines)
         self.addStretch(1)
 
@@ -75,8 +76,8 @@ class CoverageCard(Card):
         super().__init__(padding=24, spacing=12)
         row = QHBoxLayout()
         row.setSpacing(32)
-        self.came = Column("check", "accent", "build.coverage.title")
-        self.missed = Column("info", "text_muted", "build.not.title")
+        self.came = Column("check", "teal", "build.coverage.title")
+        self.missed = Column("info", "blue", "build.not.title")
         row.addLayout(self.came, 1)
         row.addLayout(self.missed, 1)
         self.body.addLayout(row)

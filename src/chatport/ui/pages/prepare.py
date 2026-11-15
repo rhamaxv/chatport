@@ -36,7 +36,7 @@ class PreparePage(Page):
         self.track(self.checklist)
         row = QHBoxLayout()
         self.check_label = QLabel()
-        self.check_label.setProperty("role", "muted")
+        self.check_label.setProperty("role", "caption")
         row.addWidget(self.check_label, 1)
         self.body.addLayout(row)
         self.timer = QTimer(self)  # keep asking, so turning Find My off shows up by itself
