@@ -128,7 +128,7 @@ _FAILURE = [("failed its checks", ErrorCode.BUILD_FAILED), ("refusing to restore
 _IOS_BACKUP = [("password is wrong", ErrorCode.PASSWORD_WRONG), ("password is needed", ErrorCode.PASSWORD_NEEDED)]
 
 
-def friendly(exc: BaseException) -> tuple[ErrorCode, dict]:
+def _friendly(exc: BaseException) -> tuple[ErrorCode, dict]:
     """Turn any exception the engine can raise into an ErrorCode plus data the UI may show."""
     from .keygrid import KeyProblem
 
@@ -174,3 +174,11 @@ def _engine_code(exc: BaseException) -> tuple[ErrorCode, dict] | None:
         if isinstance(exc, klass):
             return _by_message(message, table, default), {}
     return None
+
+
+def friendly(exc: BaseException) -> tuple[ErrorCode, dict]:
+    """Map an exception to an error code, keeping the engine's own explanation for build failures."""
+    code, data = _friendly(exc)
+    if code is ErrorCode.BUILD_FAILED and not data.get("detail"):
+        data["detail"] = scrub(str(exc))[:600]
+    return code, data

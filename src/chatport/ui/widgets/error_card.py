@@ -75,7 +75,7 @@ class ErrorCard(Card):
         code = self.code.value
         self.title.setText(t(f"error.{code}.title"))
         body = t(f"error.{code}.body")
-        if self.code == ErrorCode.UNKNOWN and self.detail:
+        if self.code in (ErrorCode.UNKNOWN, ErrorCode.BUILD_FAILED) and self.detail:
             self.extra.setText(self.detail[:300])
             self.extra.setVisible(True)
         else:
