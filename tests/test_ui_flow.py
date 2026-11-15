@@ -65,12 +65,16 @@ def walk_to_copy(qtbot, window):
 
 def test_full_flow(qtbot, tmp_path, themed):
     window, runner, state = make_window(qtbot, tmp_path)
+    assert not window.android_panel.isVisible() and not window.bridge.isVisible()   # welcome has its own diagram
     walk_to_copy(qtbot, window)
+    assert window.android_panel.isVisible() and window.iphone_panel.isVisible()
     qtbot.waitUntil(lambda: window.pages["copy"].result is not None, timeout=TIMEOUT)
     assert window.pages["copy"].summary.stats["messages"].value.text() == "61,204"
+    assert not window.bridge.is_active()                            # the connector only moves while a job runs
     click_continue(qtbot, window)
     wait_page(qtbot, window, "prepare")
     assert not window.continue_button.isEnabled()
+    assert window.iphone_panel.state_name() == "needs_you"
     prepare = window.pages["prepare"]
     prepare.check_iphone()
     qtbot.waitUntil(lambda: prepare.checklist.rows["find_my"].live is True, timeout=TIMEOUT)
@@ -78,6 +82,7 @@ def test_full_flow(qtbot, tmp_path, themed):
     assert not prepare.checklist.rows["whatsapp"].checked()        # installed is detected, signed in is not
     prepare.checklist.rows["whatsapp"].box.setChecked(True)
     prepare.checklist.rows["airplane"].box.setChecked(True)
+    assert window.iphone_panel.state_name() == "ready"
     click_continue(qtbot, window)
     wait_page(qtbot, window, "backup")
     qtbot.waitUntil(lambda: window.pages["backup"].result is not None, timeout=TIMEOUT)
@@ -97,6 +102,7 @@ def test_full_flow(qtbot, tmp_path, themed):
     assert state.done("restore") and state.done("copy")
     assert window.continue_button.text() == "Finish"
     assert not window.back_button.isVisible()
+    assert window.android_panel.state_name() == "moved" and window.iphone_panel.state_name() == "received"
     assert [c[0] for c in runner.calls] == ["key", "copy", "backup", "build", "restore"]
     assert runner.calls[0] == ("key", 64) and runner.calls[2] == ("backup", False)
 
@@ -162,7 +168,8 @@ def test_connect_gates_continue_and_offers_adb_install(qtbot, tmp_path):
     qtbot.mouseClick(page.install_button, Qt.MouseButton.LeftButton)
     qtbot.waitUntil(lambda: ("adb",) in runner.calls, timeout=TIMEOUT)
     qtbot.waitUntil(lambda: not runner.busy(), timeout=TIMEOUT)
-    assert "Plug in the Android phone" in page.android.status.text()
+    qtbot.waitUntil(lambda: "Plug in the Android phone" in window.android_panel.status.text(), timeout=TIMEOUT)
+    assert window.android_panel.state_name() == "needs_you"
 
 
 def test_resume_at_saved_step(qtbot, tmp_path):
@@ -175,7 +182,7 @@ def test_resume_at_saved_step(qtbot, tmp_path):
     again, _runner, state2 = make_window(qtbot, tmp_path)
     assert state2.current() == "prepare"
     assert again.current == "prepare"
-    assert again.rail._current == "prepare"
+    assert again.stepper.current() == "prepare"
 
 
 def test_back_resets_later_steps(qtbot, tmp_path):
@@ -195,13 +202,15 @@ def test_language_switch_changes_title(qtbot, tmp_path, monkeypatch):
     table["welcome.title"] = "Pindahkan WhatsApp ke iPhone"
     monkeypatch.setitem(i18n._tables, "id", table)
     window, runner, state = make_window(qtbot, tmp_path)
-    english = window.pages["welcome"].title.text()
+    assert window.current == "welcome"
+    english = window.title_label.text()
     qtbot.mouseClick(window.lang_buttons["id"], Qt.MouseButton.LeftButton)
     assert i18n.language() == "id"
-    assert window.pages["welcome"].title.text() == "Pindahkan WhatsApp ke iPhone" != english
+    assert window.title_label.text() == "Pindahkan WhatsApp ke iPhone" != english
+    assert window.continue_button.text() == "Sambungkan kedua HP"
     assert state.lang == "id"
     qtbot.mouseClick(window.lang_buttons["en"], Qt.MouseButton.LeftButton)
-    assert window.pages["welcome"].title.text() == english
+    assert window.title_label.text() == english
 
 
 def test_theme_toggle(qtbot, tmp_path, qapp):

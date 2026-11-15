@@ -40,8 +40,10 @@ STEPS_BEFORE = {
     "restore": ("welcome", "connect", "key", "copy", "prepare", "backup", "build"),
     "done": ("welcome", "connect", "key", "copy", "prepare", "backup", "build", "restore"),
 }
-# Stats the earlier steps would have saved, so the Done summary has numbers to show.
-SAVED = {"copy": RESULTS["copy"], "build": RESULTS["build"], "backup": RESULTS["backup"]}
+# Stats the earlier steps would have saved: the phone panels and the Done summary read them on a resumed session.
+SAVED = {"connect": {"android_model": "Pixel 7", "iphone_name": "Rizky's iPhone", "iphone_encrypted": False,
+                     "iphone_find_my": False},
+         "copy": RESULTS["copy"], "build": RESULTS["build"], "backup": RESULTS["backup"]}
 
 
 def wait_until(app: QApplication, predicate, timeout_s: float = 5.0) -> None:
