@@ -1,9 +1,9 @@
-"""Sixteen boxes of four hex digits. Typing advances, pasting a whole key fills every box."""
+"""Sixteen boxes of four hex digits. Typing advances, pasting a whole key fills every box. Focus is a 2 px lime border, an invalid key a rose one."""
 from __future__ import annotations
 
 from PySide6.QtCore import QEvent, Qt, Signal
-from PySide6.QtGui import QColor, QKeySequence
-from PySide6.QtWidgets import QApplication, QGraphicsDropShadowEffect, QGridLayout, QLineEdit, QWidget
+from PySide6.QtGui import QKeySequence
+from PySide6.QtWidgets import QApplication, QGridLayout, QLineEdit, QWidget
 
 from chatport.core.keygrid import GROUP, GROUPS, PER_ROW, normalize
 
@@ -58,28 +58,9 @@ class KeyBox(QLineEdit):
         super().keyPressEvent(event)
 
     def event(self, event) -> bool:
-        if event.type() == QEvent.Type.FocusIn:
-            if self.text():
-                self.selectAll()
-            self._glow(True)
-        elif event.type() == QEvent.Type.FocusOut:
-            self._glow(False)
+        if event.type() == QEvent.Type.FocusIn and self.text():
+            self.selectAll()
         return super().event(event)
-
-    def _glow(self, on: bool) -> None:
-        """A soft accent halo while the box has focus. Setting None drops the old effect."""
-        if not on:
-            self.setGraphicsEffect(None)
-            return
-        from chatport.ui import theme
-
-        color = QColor(theme.current().rose if self.property("invalid") else theme.current().accent)
-        color.setAlphaF(0.6)
-        effect = QGraphicsDropShadowEffect(self)
-        effect.setBlurRadius(22)
-        effect.setOffset(0, 0)
-        effect.setColor(color)
-        self.setGraphicsEffect(effect)
 
 
 class KeyGrid(QWidget):
@@ -142,8 +123,6 @@ class KeyGrid(QWidget):
         for box in self.boxes:
             box.setProperty("invalid", invalid)
             theme.repolish(box)
-            if box.hasFocus():
-                box._glow(True)
 
     def set_enabled(self, enabled: bool) -> None:
         for box in self.boxes:
