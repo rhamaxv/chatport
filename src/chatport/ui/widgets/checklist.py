@@ -1,11 +1,11 @@
-"""Rows the person ticks off, each optionally carrying a live check result next to the checkbox."""
+"""Rows the person ticks off, each optionally carrying a live check result shown as a pill on the right."""
 from __future__ import annotations
 
 from PySide6.QtCore import Qt, Signal
-from PySide6.QtWidgets import QCheckBox, QHBoxLayout, QLabel, QVBoxLayout, QWidget
+from PySide6.QtWidgets import QCheckBox, QFrame, QHBoxLayout, QLabel, QVBoxLayout, QWidget
 
 from chatport.i18n import t
-from chatport.ui.widgets.cards import Card, Dot, IconLabel
+from chatport.ui.widgets.cards import Card, IconLabel, Pill
 
 
 class ChecklistRow(QWidget):
@@ -19,37 +19,37 @@ class ChecklistRow(QWidget):
         self._note_key = note_key
         self.live: bool | None = None
         row = QHBoxLayout(self)
-        row.setContentsMargins(0, 6, 0, 6)
-        row.setSpacing(12)
+        row.setContentsMargins(0, 10, 0, 10)
+        row.setSpacing(14)
         self.box = QCheckBox()
         self.box.setVisible(manual)
         self.check = IconLabel("check", 20, "accent")      # live row, verified
-        self.warn = IconLabel("alert", 20, "warning")      # live row, not yet
+        self.warn = IconLabel("alert", 20, "amber")        # live row, not yet
         self.check.setVisible(False)
         self.warn.setVisible(not manual)
         row.addWidget(self.box, 0, Qt.AlignmentFlag.AlignTop)
         row.addWidget(self.check, 0, Qt.AlignmentFlag.AlignTop)
         row.addWidget(self.warn, 0, Qt.AlignmentFlag.AlignTop)
         text = QVBoxLayout()
-        text.setSpacing(2)
+        text.setSpacing(3)
         self.label = QLabel()
         self.label.setWordWrap(True)
         self.note = QLabel()
         self.note.setWordWrap(True)
-        self.note.setProperty("role", "muted")
+        self.note.setProperty("role", "caption")
         self.note.setVisible(bool(note_key))
         text.addWidget(self.label)
         text.addWidget(self.note)
         row.addLayout(text, 1)
-        self.dot = Dot("text_muted", 8)
-        self.dot.setVisible(False)
-        row.addWidget(self.dot, 0, Qt.AlignmentFlag.AlignVCenter)
+        self.pill = Pill("checking")
+        self.pill.setVisible(False)
+        row.addWidget(self.pill, 0, Qt.AlignmentFlag.AlignTop)
         self.retranslate()
 
     def set_live(self, ok: bool | None, note_key: str | None = None) -> None:
         self.live = ok
-        self.dot.setVisible(ok is not None)
-        self.dot.set_color("success" if ok else "warning")
+        self.pill.setVisible(ok is not None)
+        self.pill.set_kind("ready" if ok else "attention")
         self._note_key = note_key or self._static_note
         self.note.setVisible(bool(self._note_key))
         if not self.manual:  # a live row is decided by the phone, a manual row only by the person
@@ -64,16 +64,24 @@ class ChecklistRow(QWidget):
         self.label.setText(t(self.text_key))
         key = getattr(self, "_note_key", None)
         self.note.setText(t(key) if key else "")
+        self.pill.retranslate()
+        self.check.refresh()
+        self.warn.refresh()
 
 
 class Checklist(Card):
     changed = Signal()
 
     def __init__(self, parent: QWidget | None = None):
-        super().__init__(parent, padding=16, spacing=0)
+        super().__init__(parent, padding=18, spacing=0)
+        self.body.setContentsMargins(22, 8, 22, 8)
         self.rows: dict[str, ChecklistRow] = {}
 
     def add(self, key: str, text_key: str, manual: bool = True, note_key: str | None = None) -> ChecklistRow:
+        if self.rows:
+            divider = QFrame(self)
+            divider.setProperty("divider", True)
+            self.body.addWidget(divider)
         row = ChecklistRow(key, text_key, manual, self, note_key=note_key)
         row.box.toggled.connect(lambda _c: self.changed.emit())
         self.rows[key] = row

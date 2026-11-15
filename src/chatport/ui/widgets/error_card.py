@@ -2,11 +2,11 @@
 from __future__ import annotations
 
 from PySide6.QtCore import Qt, Signal
-from PySide6.QtWidgets import QHBoxLayout, QLabel, QPushButton, QVBoxLayout, QWidget
+from PySide6.QtWidgets import QFrame, QHBoxLayout, QLabel, QPushButton, QVBoxLayout, QWidget
 
 from chatport.core.errors import ACTION, ACTION_TARGET, ErrorCode
 from chatport.i18n import t
-from chatport.ui.widgets.cards import Card, IconLabel
+from chatport.ui.widgets.cards import Card, Chip
 
 ACTION_LABEL = {"retry": "common.try_again", "back": "common.go_back", "guide": "common.show_how", "log": "common.copy_log"}
 
@@ -26,13 +26,17 @@ class ErrorCard(Card):
 
     def __init__(self, parent: QWidget | None = None):
         super().__init__(parent, padding=20, spacing=12)
+        self.body.setContentsMargins(18, 18, 22, 18)
         self.set_tone("danger")
         self.code = ErrorCode.UNKNOWN
         self.detail = ""
         self.kind = "none"
         row = QHBoxLayout()
-        row.setSpacing(14)
-        self.icon = IconLabel("alert", 26, "danger")
+        row.setSpacing(16)
+        self.bar = QFrame()
+        self.bar.setObjectName("errorbar")
+        row.addWidget(self.bar, 0)
+        self.icon = Chip("alert", 40, "rose")
         row.addWidget(self.icon, 0, Qt.AlignmentFlag.AlignTop)
         text = QVBoxLayout()
         text.setSpacing(6)
@@ -49,6 +53,7 @@ class ErrorCard(Card):
         text.addWidget(self.title)
         text.addWidget(self.text)
         text.addWidget(self.extra)
+        text.addSpacing(6)
         buttons = QHBoxLayout()
         buttons.setSpacing(8)
         self.button = QPushButton()
