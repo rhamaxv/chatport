@@ -241,3 +241,17 @@ def test_done_page_cleanup_calls_back(qtbot, tmp_path, monkeypatch):
     qtbot.mouseClick(window.pages["done"].cleanup_card.button, Qt.MouseButton.LeftButton)
     assert calls == [False]
     assert not window.pages["done"].cleanup_card.button.isEnabled()
+
+
+def test_disconnect_during_job_returns_to_connect_and_resumes(qtbot, tmp_path):
+    from chatport.core.events import Event
+    runner = FakeRunner(interval_ms=5)
+    window, runner, _state = make_window(qtbot, tmp_path, runner)
+    walk_to_copy(qtbot, window)
+    assert window.current == "copy"
+    runner.event.emit(Event("copy", "error", data={"code": "no_android"}))
+    qtbot.waitUntil(lambda: window.current == "connect", timeout=2000)
+    assert window.pages["connect"].notice.isVisible()
+    click_continue(qtbot, window)
+    qtbot.waitUntil(lambda: window.current == "copy", timeout=2000)  # not back to the key step
+    assert not window.pages["connect"].notice.isVisible()

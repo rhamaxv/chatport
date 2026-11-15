@@ -78,6 +78,7 @@ STRINGS: dict[str, str] = {
 
     # connect
     "connect.title": "Sambungkan kedua HP",
+    "connect.disconnected": "Ada HP yang terputus, jadi kamu kembali ke sini. Colok lagi kedua HP, nanti lanjut dari tempat terakhir.",
     "connect.subtitle": "Colok HP Android dan iPhone. Kartu di bawah berubah mengikuti kondisinya.",
     "connect.checking": "Memeriksa",
     "connect.android.title": "HP Android",

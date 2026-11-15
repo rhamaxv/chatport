@@ -7,6 +7,7 @@ from PySide6.QtWidgets import QHBoxLayout, QLabel, QProgressBar, QPushButton
 from chatport.i18n import t
 from chatport.ui import format as fmt
 from chatport.ui.pages.base import Context, Page
+from chatport.ui.widgets.banner import Banner
 from chatport.ui.widgets.cards import StatusCard
 from chatport.ui.workers import FunctionThread
 
@@ -46,6 +47,9 @@ class ConnectPage(Page):
         self.timer.setInterval(INTERVAL_MS)
         self.timer.timeout.connect(self.refresh)
 
+        self.notice = Banner("alert", "connect.disconnected")
+        self.notice.setVisible(False)
+        self.body.addWidget(self.notice)
         self.android = StatusCard("phone-android")
         self.iphone = StatusCard("phone-iphone")
         self.computer = StatusCard("laptop")
@@ -77,6 +81,7 @@ class ConnectPage(Page):
         self.timer.start()
 
     def on_leave(self) -> None:
+        self.notice.setVisible(False)  # the reason for the detour is only relevant while here
         self.timer.stop()
         self.wait()
 
@@ -93,6 +98,10 @@ class ConnectPage(Page):
         self._thread.result.connect(self._on_result)
         self._thread.failed.connect(lambda _name: None)
         self._thread.start()
+
+    def show_notice(self) -> None:
+        """Tell the user a phone went away mid-job; stays until the page is left."""
+        self.notice.setVisible(True)
 
     def _on_result(self, result: object) -> None:
         if not isinstance(result, dict):
@@ -151,6 +160,7 @@ class ConnectPage(Page):
 
     def retranslate(self) -> None:
         super().retranslate()
+        self.notice.retranslate()
         self.install_button.setText(t("connect.install_adb"))
         self.render()
 

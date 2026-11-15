@@ -11,6 +11,10 @@ from PySide6.QtWidgets import (QApplication, QFrame, QHBoxLayout, QLabel, QMainW
 
 from chatport import i18n
 from chatport.core.steps import STEPS
+
+# A phone went away while a job ran: the Connect page is the place to sort that out.
+DISCONNECT_CODES = frozenset({"no_android", "android_unauthorized", "android_offline", "no_adb",
+                              "no_iphone", "iphone_untrusted", "iphone_disconnected"})
 from chatport.i18n import t
 from chatport.ui import icons, theme
 from chatport.ui.pages import PAGES
@@ -168,7 +172,10 @@ class MainWindow(QMainWindow):
         self.state.mark(page.step, **page.stats())
         index = STEPS.index(page.step)
         if index + 1 < len(STEPS):
-            self.go(STEPS[index + 1])
+            # After a detour back to Connect, resume where the user left off rather than redoing steps.
+            resume = self.state.current()
+            resume_index = STEPS.index(resume) if resume in STEPS else index + 1
+            self.go(STEPS[max(index + 1, resume_index)])
         else:
             self._refresh_rail()
 
@@ -178,6 +185,11 @@ class MainWindow(QMainWindow):
             log.debug("event for %s ignored on page %s", getattr(event, "job", "?"), page.step)
             return
         page.on_event(event)
+        code = event.data.get("code") if event.kind == "error" else None
+        if code in DISCONNECT_CODES and self.current != "connect":
+            log.info("phone disconnected during %s, returning to connect", page.step)
+            self.go("connect")
+            self.pages["connect"].show_notice()
 
     # ----- appearance ---------------------------------------------------------------------------
 

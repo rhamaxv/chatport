@@ -78,6 +78,7 @@ STRINGS: dict[str, str] = {
 
     # connect
     "connect.title": "Connect both phones",
+    "connect.disconnected": "A phone was disconnected, so you are back here. Plug both phones in again and you will continue where you left off.",
     "connect.subtitle": "Plug in the Android phone and the iPhone. The cards update as things change.",
     "connect.checking": "Checking",
     "connect.android.title": "Android phone",
