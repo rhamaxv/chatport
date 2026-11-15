@@ -1,12 +1,20 @@
 """Step 5: the iPhone checklist. Some rows can be verified live, airplane mode is confirmed by hand."""
 from __future__ import annotations
 
+import sys
+
 from PySide6.QtWidgets import QHBoxLayout, QLabel, QPushButton
 
 from chatport.i18n import t
 from chatport.ui.pages.base import Context, Page
 from chatport.ui.widgets.checklist import Checklist
 from chatport.ui.workers import FunctionThread
+
+
+def _os_name() -> str:
+    if sys.platform == "darwin":
+        return "macos"
+    return "windows" if sys.platform.startswith("win") else "linux"
 
 
 class PreparePage(Page):
@@ -20,7 +28,7 @@ class PreparePage(Page):
         self.checklist = Checklist()
         self.checklist.add("whatsapp", "prepare.whatsapp")
         self.checklist.add("find_my", "prepare.find_my")
-        self.checklist.add("encryption", "prepare.encryption")
+        self.checklist.add("encryption", f"prepare.encryption.{_os_name()}")
         self.checklist.add("airplane", "prepare.airplane")
         self.checklist.changed.connect(lambda: self.continue_changed.emit(self.can_continue()))
         self.body.addWidget(self.checklist)
@@ -40,6 +48,7 @@ class PreparePage(Page):
         self.check_button.setText(t("prepare.check"))
 
     def on_enter(self) -> None:
+        self.check_iphone()  # ask the iPhone right away; the user only ticks what cannot be verified
         self.check_label.setText("")
 
     def on_leave(self) -> None:
