@@ -13,16 +13,20 @@ class ChecklistRow(QWidget):
         super().__init__(parent)
         self.key = key
         self.text_key = text_key
+        self.manual = manual
         self.live: bool | None = None
         row = QHBoxLayout(self)
         row.setContentsMargins(0, 6, 0, 6)
         row.setSpacing(12)
         self.box = QCheckBox()
         self.box.setVisible(manual)
-        self.check = IconLabel("check", 20, "accent")
+        self.check = IconLabel("check", 20, "accent")      # live row, verified
+        self.warn = IconLabel("alert", 20, "warning")      # live row, not yet
         self.check.setVisible(False)
+        self.warn.setVisible(not manual)
         row.addWidget(self.box, 0, Qt.AlignmentFlag.AlignTop)
         row.addWidget(self.check, 0, Qt.AlignmentFlag.AlignTop)
+        row.addWidget(self.warn, 0, Qt.AlignmentFlag.AlignTop)
         text = QVBoxLayout()
         text.setSpacing(2)
         self.label = QLabel()
@@ -44,12 +48,13 @@ class ChecklistRow(QWidget):
         self.dot.set_color("success" if ok else "warning")
         self.note.setVisible(bool(note_key))
         self._note_key = note_key
-        if ok:
-            self.box.setChecked(True)
+        if not self.manual:  # a live row is decided by the phone, a manual row only by the person
+            self.check.setVisible(ok is True)
+            self.warn.setVisible(ok is not True)
         self.retranslate()
 
     def checked(self) -> bool:
-        return self.box.isChecked() or self.live is True
+        return self.box.isChecked() if self.manual else self.live is True
 
     def retranslate(self) -> None:
         self.label.setText(t(self.text_key))
