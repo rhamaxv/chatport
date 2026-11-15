@@ -96,13 +96,21 @@ def build_real(state: State):
     from chatport.tools import adb as tools_adb
     from chatport.tools import platform as tools_platform
 
-    adb_path = tools_adb.find(paths.adb_dir())
-    if adb_path:
-        tools_adb.use(adb_path)
-    runner = JobRunner(Engine(), paths.work_dir(), state,
-                       adb_installer=lambda cb: tools_adb.download(paths.adb_dir(), cb))
-    checks_fn = lambda: connect_checks(Engine(), tools_adb.find(paths.adb_dir()), paths.work_dir(),  # noqa: E731
-                                       tools_platform.check)
+    def locate_adb() -> str | None:
+        """Find adb and point the engine at it, every time: it may have been installed a moment ago."""
+        found = tools_adb.find(paths.adb_dir())
+        if found:
+            tools_adb.use(found)
+        return found
+
+    def install_adb(on_progress) -> str:
+        installed = tools_adb.download(paths.adb_dir(), on_progress)
+        tools_adb.use(installed)
+        return installed
+
+    locate_adb()
+    runner = JobRunner(Engine(), paths.work_dir(), state, adb_installer=install_adb)
+    checks_fn = lambda: connect_checks(Engine(), locate_adb(), paths.work_dir(), tools_platform.check)  # noqa: E731
     ready_fn = lambda: ready_checks(Engine())  # noqa: E731
     return runner, checks_fn, ready_fn
 
