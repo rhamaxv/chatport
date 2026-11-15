@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Chatport
+Comment=Move WhatsApp from Android to the iPhone you already use, without erasing it
+Exec=Chatport
+Icon=chatport
+Terminal=false
+Categories=Utility;
+StartupWMClass=Chatport
