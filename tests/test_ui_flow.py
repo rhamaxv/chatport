@@ -258,3 +258,17 @@ def test_disconnect_during_job_returns_to_connect_and_resumes(qtbot, tmp_path):
     click_continue(qtbot, window)
     qtbot.waitUntil(lambda: window.current == "copy", timeout=2000)  # not back to the key step
     assert not window.pages["connect"].notice.isVisible()
+
+
+def test_backup_page_offers_to_reuse_an_earlier_backup(qtbot, tmp_path):
+    runner = FakeRunner(interval_ms=5)
+    runner.existing_age = 600.0
+    window, runner, _state = make_window(qtbot, tmp_path, runner)
+    for step in ("welcome", "connect", "key", "copy", "prepare"):
+        _state.mark(step)
+    window.go("backup")
+    page = window.pages["backup"]
+    assert page.reuse_card.isVisible()
+    qtbot.mouseClick(page.reuse_button, Qt.MouseButton.LeftButton)
+    assert runner.last_backup_reuse is True
+    qtbot.waitUntil(page.can_continue, timeout=TIMEOUT)

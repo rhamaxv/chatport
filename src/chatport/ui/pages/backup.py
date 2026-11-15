@@ -1,7 +1,7 @@
 """Step 6: a full iPhone backup, then a WhatsApp-only copy the next step can build on."""
 from __future__ import annotations
 
-from PySide6.QtWidgets import QHBoxLayout, QLabel
+from PySide6.QtWidgets import QHBoxLayout, QLabel, QPushButton
 
 from chatport.i18n import t
 from chatport.ui import format as fmt
@@ -51,7 +51,28 @@ class BackupPage(Page):
         self.note = QLabel()
         self.note.setProperty("role", "muted")
         self.note.setWordWrap(True)
-        for widget in (self.banner, self.progress, self.done_card, self.note):
+        self.reuse_card = Card(padding=20, spacing=10)
+        self.reuse_title = QLabel()
+        self.reuse_title.setProperty("role", "heading")
+        self.reuse_body = QLabel()
+        self.reuse_body.setWordWrap(True)
+        self.reuse_body.setProperty("role", "muted")
+        buttons = QHBoxLayout()
+        self.reuse_button = QPushButton()
+        self.reuse_button.setProperty("variant", "primary")
+        self.reuse_button.clicked.connect(lambda: self.start_job(reuse=True))
+        self.again_button = QPushButton()
+        self.again_button.setProperty("variant", "quiet")
+        self.again_button.clicked.connect(lambda: self.start_job(reuse=False))
+        buttons.addWidget(self.reuse_button)
+        buttons.addWidget(self.again_button)
+        buttons.addStretch(1)
+        self.reuse_card.body.addWidget(self.reuse_title)
+        self.reuse_card.body.addWidget(self.reuse_body)
+        self.reuse_card.body.addLayout(buttons)
+        self.reuse_card.setVisible(False)
+        self._reuse_age: float | None = None
+        for widget in (self.reuse_card, self.banner, self.progress, self.done_card, self.note):
             self.body.addWidget(widget)
         for widget in (self.banner, self.progress, self.done_card):
             self.track(widget)
@@ -61,15 +82,27 @@ class BackupPage(Page):
     def retranslate(self) -> None:
         super().retranslate()
         self.note.setText(t("backup.note"))
+        self.reuse_title.setText(t("backup.reuse.title"))
+        self.reuse_body.setText(t("backup.reuse.body", age=fmt.age(self._reuse_age)))
+        self.reuse_button.setText(t("backup.reuse.use"))
+        self.again_button.setText(t("backup.reuse.again"))
 
     def on_enter(self) -> None:
         saved = self.ctx.state.get(self.step)
         if saved:
             self._finish(saved)
         elif not self.ctx.runner.busy():
-            self.start_job()
+            udid = ((self.ctx.last_connect or {}).get("iphone") or {}).get("udid")
+            self._reuse_age = self.ctx.runner.existing_backup_age(udid)
+            if self._reuse_age is None:
+                self.start_job()
+            else:  # an earlier attempt left a full backup: offer to skip the slow part
+                self.progress.setVisible(False)
+                self.reuse_card.setVisible(True)
+                self.retranslate()
 
-    def start_job(self) -> None:
+    def start_job(self, reuse: bool = False) -> None:
+        self.reuse_card.setVisible(False)
         self.clear_error()
         password = self.password_or_ask()
         if self.ctx.iphone_encrypted() and not password:
@@ -83,7 +116,7 @@ class BackupPage(Page):
         self.done_card.setVisible(False)
         self.busy_changed.emit(True)
         self.continue_changed.emit(False)
-        self.ctx.runner.backup(password)
+        self.ctx.runner.backup(password, reuse)
 
     def on_event(self, event) -> None:
         if event.kind == "progress":

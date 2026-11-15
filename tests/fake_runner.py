@@ -59,8 +59,12 @@ class FakeRunner(QObject):
     def copy(self) -> None:
         self._start("copy")
 
-    def backup(self, password: str | None) -> None:
+    def backup(self, password: str | None, reuse: bool = False) -> None:
+        self.last_backup_reuse = reuse
         self._start("backup", password is not None)
+
+    def existing_backup_age(self, udid: str | None) -> float | None:
+        return getattr(self, "existing_age", None)
 
     def build(self, password: str | None) -> None:
         self._start("build")
