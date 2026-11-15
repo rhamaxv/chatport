@@ -1,6 +1,6 @@
 [project]
 name = "chatport"
-version = "0.1.1"
+version = "0.2.0"
 description = "Move WhatsApp from Android to the iPhone you already use, without erasing it"
 readme = "README.md"
 license = "GPL-3.0-or-later"
