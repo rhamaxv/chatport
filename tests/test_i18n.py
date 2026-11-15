@@ -60,3 +60,20 @@ def test_indonesian_falls_back_to_english():
 def test_unknown_language_is_ignored():
     i18n.set_language("fr")
     assert i18n.language() == "en"
+
+
+def test_indonesian_is_complete_and_placeholders_match():
+    from string import Formatter
+
+    from chatport.i18n.id import STRINGS as ID
+
+    assert i18n.missing("id") == []
+    assert set(ID) == set(STRINGS)
+
+    def placeholders(text: str) -> set[str]:
+        return {name for _, name, _, _ in Formatter().parse(text) if name is not None}
+
+    for key, english in STRINGS.items():
+        assert placeholders(ID[key]) == placeholders(english), key
+        assert chr(0x2014) not in ID[key], key
+        assert ID[key].strip(), key
