@@ -7,7 +7,7 @@ license = "GPL-3.0-or-later"
 license-files = ["LICENSE"]
 requires-python = ">=3.12"
 dependencies = [
-    "wamove @ git+https://github.com/rhamaxv/wamove.git@fffdc1dea76198291f1dd34e6d830e4531e476fc",
+    "wamove @ git+https://github.com/rhamaxv/wamove.git@662e05ae1b84e7fcce0c453877ff892d6dd80e52",
     "PySide6>=6.7",
 ]
 
