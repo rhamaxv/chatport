@@ -136,6 +136,8 @@ STRINGS: dict[str, str] = {
     "prepare.encryption.windows": "Encrypted backups are off. In iTunes or the Apple Devices app, untick Encrypt local backup",
     "prepare.encryption.linux": "Encrypted backups are off. If they are on, turn them off once from a Mac or Windows PC",
     "prepare.airplane": "Airplane mode is on, so no new messages arrive during the move",
+    "prepare.whatsapp.note": "The cable only shows whether WhatsApp is installed. Open it on the iPhone and make sure it is signed in with the number from the Android phone.",
+    "prepare.airplane.note": "Cannot be read or switched over the cable. Swipe down from the top-right corner of the iPhone and tap the airplane icon. Turn it off again after the restore.",
     "prepare.check": "Check iPhone",
     "prepare.checking": "Asking the iPhone",
     "prepare.checked": "Checked {name}",

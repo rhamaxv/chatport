@@ -27,10 +27,10 @@ class PreparePage(Page):
         super().__init__(ctx)
         self._thread: FunctionThread | None = None
         self.checklist = Checklist()
-        self.checklist.add("whatsapp", "prepare.whatsapp")
+        self.checklist.add("whatsapp", "prepare.whatsapp", note_key="prepare.whatsapp.note")
         self.checklist.add("find_my", "prepare.find_my", manual=False)        # verified over USB
         self.checklist.add("encryption", f"prepare.encryption.{_os_name()}", manual=False)
-        self.checklist.add("airplane", "prepare.airplane")
+        self.checklist.add("airplane", "prepare.airplane", note_key="prepare.airplane.note")
         self.checklist.changed.connect(lambda: self.continue_changed.emit(self.can_continue()))
         self.body.addWidget(self.checklist)
         self.track(self.checklist)

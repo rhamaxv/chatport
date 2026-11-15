@@ -136,6 +136,8 @@ STRINGS: dict[str, str] = {
     "prepare.encryption.windows": "Cadangan terenkripsi mati. Di iTunes atau aplikasi Apple Devices, hilangkan centang Encrypt local backup",
     "prepare.encryption.linux": "Cadangan terenkripsi mati. Kalau masih nyala, matikan sekali lewat Mac atau PC Windows",
     "prepare.airplane": "Mode Pesawat menyala, supaya tidak ada pesan baru masuk selama proses",
+    "prepare.whatsapp.note": "Lewat kabel cuma kelihatan WhatsApp terpasang atau tidak. Buka WhatsApp di iPhone dan pastikan sudah masuk dengan nomor yang sama seperti di HP Android.",
+    "prepare.airplane.note": "Tidak bisa dibaca atau dinyalakan lewat kabel. Geser ke bawah dari pojok kanan atas iPhone lalu ketuk ikon pesawat. Matikan lagi setelah pemulihan selesai.",
     "prepare.check": "Periksa iPhone",
     "prepare.checking": "Menanyakan ke iPhone",
     "prepare.checked": "{name} sudah diperiksa",

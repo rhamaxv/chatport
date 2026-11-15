@@ -9,11 +9,14 @@ from chatport.ui.widgets.cards import Card, Dot, IconLabel
 
 
 class ChecklistRow(QWidget):
-    def __init__(self, key: str, text_key: str, manual: bool = True, parent: QWidget | None = None):
+    def __init__(self, key: str, text_key: str, manual: bool = True, parent: QWidget | None = None,
+                 note_key: str | None = None):
         super().__init__(parent)
         self.key = key
         self.text_key = text_key
         self.manual = manual
+        self._static_note = note_key  # always shown, e.g. how to do this on the phone
+        self._note_key = note_key
         self.live: bool | None = None
         row = QHBoxLayout(self)
         row.setContentsMargins(0, 6, 0, 6)
@@ -32,8 +35,9 @@ class ChecklistRow(QWidget):
         self.label = QLabel()
         self.label.setWordWrap(True)
         self.note = QLabel()
+        self.note.setWordWrap(True)
         self.note.setProperty("role", "muted")
-        self.note.setVisible(False)
+        self.note.setVisible(bool(note_key))
         text.addWidget(self.label)
         text.addWidget(self.note)
         row.addLayout(text, 1)
@@ -46,8 +50,8 @@ class ChecklistRow(QWidget):
         self.live = ok
         self.dot.setVisible(ok is not None)
         self.dot.set_color("success" if ok else "warning")
-        self.note.setVisible(bool(note_key))
-        self._note_key = note_key
+        self._note_key = note_key or self._static_note
+        self.note.setVisible(bool(self._note_key))
         if not self.manual:  # a live row is decided by the phone, a manual row only by the person
             self.check.setVisible(ok is True)
             self.warn.setVisible(ok is not True)
@@ -69,8 +73,8 @@ class Checklist(Card):
         super().__init__(parent, padding=16, spacing=0)
         self.rows: dict[str, ChecklistRow] = {}
 
-    def add(self, key: str, text_key: str, manual: bool = True) -> ChecklistRow:
-        row = ChecklistRow(key, text_key, manual, self)
+    def add(self, key: str, text_key: str, manual: bool = True, note_key: str | None = None) -> ChecklistRow:
+        row = ChecklistRow(key, text_key, manual, self, note_key=note_key)
         row.box.toggled.connect(lambda _c: self.changed.emit())
         self.rows[key] = row
         self.body.addWidget(row)
