@@ -46,23 +46,33 @@ def bundled(adb_dir: Path, platform: str | None = None) -> Path:
     return Path(adb_dir) / "platform-tools" / binary_name(platform)
 
 
-def _common_locations(platform: str) -> list[Path]:
-    home = Path.home()
+WINDOWS_EXECUTABLE_SUFFIXES = (".exe", ".cmd", ".bat", ".com")
+
+
+def _common_locations(platform: str) -> list[str]:
+    """Well known install paths. POSIX paths stay literal strings so they never get backslashes."""
     if platform.startswith("win"):
         local = os.environ.get("LOCALAPPDATA", "")
         program_data = os.environ.get("ProgramData", r"C:\ProgramData")
-        candidates = [
-            Path(local) / "Android" / "Sdk" / "platform-tools" / "adb.exe" if local else None,
-            Path(program_data) / "chocolatey" / "lib" / "adb" / "tools" / "platform-tools" / "adb.exe",
-        ]
-        return [c for c in candidates if c is not None]
+        locations = []
+        if local:
+            locations.append(os.path.join(local, "Android", "Sdk", "platform-tools", "adb.exe"))
+        locations.append(
+            os.path.join(program_data, "chocolatey", "lib", "adb", "tools", "platform-tools", "adb.exe")
+        )
+        return locations
     if platform == "darwin":
-        return [Path("/opt/homebrew/bin/adb"), home / "Library" / "Android" / "sdk" / "platform-tools" / "adb"]
-    return [Path("/usr/bin/adb"), home / "Android" / "Sdk" / "platform-tools" / "adb"]
+        return ["/opt/homebrew/bin/adb", os.path.expanduser("~/Library/Android/sdk/platform-tools/adb")]
+    return ["/usr/bin/adb", os.path.expanduser("~/Android/Sdk/platform-tools/adb")]
 
 
-def _executable(path: Path) -> bool:
-    return path.is_file() and os.access(path, os.X_OK)
+def _executable(path: str | Path) -> bool:
+    """Windows has no exec bit and os.access(X_OK) is true for any file, so go by suffix there."""
+    if not os.path.isfile(path):
+        return False
+    if os.name == "nt":
+        return str(path).lower().endswith(WINDOWS_EXECUTABLE_SUFFIXES)
+    return os.access(path, os.X_OK)
 
 
 def find(
@@ -80,7 +90,7 @@ def find(
         return on_path
     for location in _common_locations(plat):
         if _executable(location):
-            return str(location)
+            return location
     return None
 
 
