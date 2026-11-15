@@ -65,6 +65,12 @@ STRINGS: dict[str, str] = {
     "phase.download": "Downloading adb",
     "phase.folder": "Copying {name}",
 
+    # status pills
+    "pill.ready": "Ready",
+    "pill.attention": "Needs attention",
+    "pill.problem": "Problem",
+    "pill.checking": "Checking",
+
     # welcome
     "welcome.title": "Move WhatsApp to your iPhone",
     "welcome.subtitle": "Your Android chats, groups and media end up on the iPhone you already use. Nothing else on it changes.",
@@ -201,6 +207,7 @@ STRINGS: dict[str, str] = {
     # done
     "done.title": "All done",
     "done.subtitle": "Open WhatsApp on the iPhone and look around. Everything below is optional.",
+    "done.stats.stickers": "favourite stickers",
     "done.verify.title": "Check in WhatsApp",
     "done.verify.chats": "Your chats are there with their history",
     "done.verify.groups": "Groups show their members and messages",

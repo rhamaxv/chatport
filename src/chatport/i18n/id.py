@@ -65,6 +65,12 @@ STRINGS: dict[str, str] = {
     "phase.download": "Mengunduh adb",
     "phase.folder": "Menyalin {name}",
 
+    # status pills
+    "pill.ready": "Siap",
+    "pill.attention": "Perlu tindakan",
+    "pill.problem": "Masalah",
+    "pill.checking": "Mengecek",
+
     # welcome
     "welcome.title": "Pindahkan WhatsApp ke iPhone kamu",
     "welcome.subtitle": "Chat, grup dan media dari Android berpindah ke iPhone yang sudah kamu pakai. Yang lain di iPhone tidak berubah.",
@@ -201,6 +207,7 @@ STRINGS: dict[str, str] = {
     # done
     "done.title": "Semua selesai",
     "done.subtitle": "Buka WhatsApp di iPhone dan lihat-lihat. Semua yang di bawah ini opsional.",
+    "done.stats.stickers": "stiker favorit",
     "done.verify.title": "Cek di WhatsApp",
     "done.verify.chats": "Chat kamu ada beserta riwayatnya",
     "done.verify.groups": "Grup menampilkan anggota dan pesannya",
