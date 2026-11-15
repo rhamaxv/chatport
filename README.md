@@ -115,11 +115,12 @@ pip install -e ".[dev]"
 python -m chatport
 ```
 
-`CHATPORT_FAKE=1 python -m chatport` opens the window with a pretend engine, so you can click through all nine steps without any phone. `python -m pytest -q` runs the tests, which CI also runs on Linux, macOS and Windows. See [CONTRIBUTING.md](CONTRIBUTING.md) for the rules of the house.
+`CHATPORT_FAKE=1 python -m chatport
+python tools/screens.py   # renders every screen in both themes to docs/screenshots` opens the window with a pretend engine, so you can click through all nine steps without any phone. `python -m pytest -q` runs the tests, which CI also runs on Linux, macOS and Windows. See [CONTRIBUTING.md](CONTRIBUTING.md) for the rules of the house.
 
 ## Status
 
-Chatport is new software. It is a graphical front end for the [wamove](https://github.com/rhamaxv/wamove) engine, and the whole chain has been tested on a small number of phones so far. Read the Build report before you restore, check the chats on the iPhone afterwards, and keep the Android phone untouched until you are happy with the result. If something looks wrong, use Undo and open an issue with the log.
+Chatport 0.2 has completed one real migration end to end: 1.5 million messages, 1,451 chats and 336,000 media files from a multi-account Android phone to an iPhone on iOS 27, with the Android phone left untouched. It is still young software built on the wamove engine and tested on a handful of phones. Keep the Android phone as it is until you have checked the result on the iPhone, and use Undo if something looks wrong.
 
 ## Credits and license
 
