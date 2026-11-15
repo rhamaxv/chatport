@@ -137,8 +137,14 @@ class JobRunner(QObject):
             return result
         return self._start("copy", body)
 
-    def backup(self, password: str | None = None) -> bool:
-        return self._start("backup", lambda report: self._engine.backup(self._work, report, password))
+    def backup(self, password: str | None = None, reuse: bool = False) -> bool:
+        return self._start("backup", lambda report: self._engine.backup(self._work, report, password, reuse))
+
+    def existing_backup_age(self, udid: str | None) -> float | None:
+        """Seconds since this iPhone was fully backed up into the work folder, or None if never."""
+        if not udid:
+            return None
+        return self._engine.backup_age(self._work, udid)
 
     def build(self, password: str | None = None) -> bool:
         return self._start("build",

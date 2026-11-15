@@ -87,8 +87,11 @@ class FakeEngine:
     def summary(self, work) -> dict:
         return self._run("summary")
 
-    def backup(self, work, report, password) -> dict:
-        return self._run("backup", report, password=password)
+    def backup(self, work, report, password, reuse=False) -> dict:
+        return self._run("backup", report, password=password, reuse=reuse)
+
+    def backup_age(self, work, udid) -> float | None:
+        return getattr(self, "existing_age", None)
 
     def build(self, work, report, cancel, password) -> dict:
         return self._run("build", report, cancel, password=password)

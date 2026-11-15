@@ -53,8 +53,12 @@ class Engine:
     def summary(self, work: Work) -> dict:
         return api.summary(work)
 
-    def backup(self, work: Work, report: Report, password: str | None) -> dict:
-        return api.backup(work, _bridge(report), password)
+    def backup(self, work: Work, report: Report, password: str | None, reuse: bool = False) -> dict:
+        return api.backup(work, _bridge(report), password, reuse=reuse)
+
+    def backup_age(self, work: Work, udid: str) -> float | None:
+        """Seconds since a full backup of this iPhone was taken into the work folder, or None."""
+        return api.backup_age(work, udid)
 
     def build(self, work: Work, report: Report, cancel: threading.Event, password: str | None) -> dict:
         return api.build(work, _bridge(report), cancel, password)

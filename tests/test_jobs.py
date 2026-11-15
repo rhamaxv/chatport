@@ -91,9 +91,9 @@ def test_busy_rejects_second_job(qtbot, setup):
     started = threading.Event()
     original = engine.backup
 
-    def slow_backup(work, report, password):
+    def slow_backup(work, report, password, reuse=False):
         started.set()
-        return original(work, report, password)
+        return original(work, report, password, reuse)
     engine.backup = slow_backup
     with qtbot.waitSignal(runner.event, timeout=5000, check_params_cb=terminal):
         assert runner.backup("pw")
@@ -102,7 +102,7 @@ def test_busy_rejects_second_job(qtbot, setup):
         assert runner.install_adb() is False
     assert not runner.busy() and runner.job_name() is None
     assert state.done("backup")
-    assert ("backup", {"password": "pw"}) in engine.calls
+    assert ("backup", {"password": "pw", "reuse": False}) in engine.calls
 
 
 def test_cancel_yields_cancelled(qtbot, setup):
@@ -207,3 +207,16 @@ def test_log_never_contains_key(qtbot, setup, caplog):
     assert events[-1].data["code"] == ErrorCode.UNKNOWN.value
     assert KEY_HEX not in caplog.text
     assert KEY_HEX not in events[-1].data["detail"]
+
+
+def test_backup_passes_reuse_to_engine(qtbot, tmp_path):
+    from chatport.core.jobs import JobRunner
+    from chatport.core.state import State
+    engine = FakeEngine()
+    engine.existing_age = 42.0
+    runner = JobRunner(engine, tmp_path, State(tmp_path / "s.json").load())
+    assert runner.existing_backup_age("udid") == 42.0
+    assert runner.existing_backup_age(None) is None
+    with qtbot.waitSignal(runner.event, timeout=5000, check_params_cb=lambda e: e.kind == "done"):
+        assert runner.backup(None, reuse=True)
+    assert any(name == "backup" and kw.get("reuse") is True for name, kw in engine.calls)
