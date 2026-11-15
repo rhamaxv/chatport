@@ -56,6 +56,7 @@ class KeyPage(Page):
         self.howto_body.setWordWrap(True)
         self.howto_body.setProperty("role", "muted")
         self.howto_path = QLabel()
+        self.howto_path.setWordWrap(True)
         self.howto_path.setProperty("role", "mono")
         self.howto_path.setWordWrap(True)
         howto.body.addWidget(self.howto_body)
