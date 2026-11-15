@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Chatport glyph, single colour on transparent, for the in-app header.
+     Same geometry as icon.svg without the plate. Recolour by changing the two colour attributes on <g>. -->
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <g fill="#157A5B" stroke="#157A5B">
+    <!-- Back bubble: open outline that stops 26 px short of the front bubble, same gap as icon.svg -->
+    <path d="M 392 530 H 266 L 178 626 V 296 A 96 96 0 0 1 274 200 H 542 A 96 96 0 0 1 638 296 V 414"
+          fill="none" stroke-width="72" stroke-linejoin="round" stroke-linecap="butt"/>
+    <!-- Front bubble, filled, with the arrow cut out (evenodd) -->
+    <path fill-rule="evenodd" stroke="none"
+          d="M 514 440 H 782 A 96 96 0 0 1 878 536 V 866 L 790 770 H 514 A 96 96 0 0 1 418 674 V 536 A 96 96 0 0 1 514 440 Z
+             M 536 577 H 688 V 513 L 772 605 L 688 697 V 633 H 536 Z"/>
+  </g>
+</svg>
